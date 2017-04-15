@@ -1,0 +1,8 @@
+int main(){
+	string str = "heuristic_targetBlocks_1_threshold_0_filesystems_0145_to_0145_output.txt";
+	char *cstr = &str[0u];
+	File f (cstr,1);
+	cout << f.numOfFiles << endl;
+	cout << f.numOfBlocks << endl;
+return 0;
+}
