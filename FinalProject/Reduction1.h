@@ -16,11 +16,13 @@ public:
 	Reduction1(char* path);
 	virtual ~Reduction1();
 	void parser();
-	std::vector< std::vector<char> > DNFFile;
-	std::vector< std::vector<char> > DNFBlocks;
-	std::vector< std::vector<char> > DNFEdges;
-	std::vector< std::vector<char> > DNFDiff;
+	std::vector<bool> id2dnf (int id);
+	std::vector< std::vector <bool> > DNFFile;
+	std::vector< std::vector <bool> > DNFBlocks;
+	std::vector< std::vector <bool> > DNFEdges;
+	std::vector< std::vector <bool> > DNFDiff;
 	int numOfLiterals;
+	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;
 

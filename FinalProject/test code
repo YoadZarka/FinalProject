@@ -6,3 +6,16 @@ int main(){
 	cout << f.numOfBlocks << endl;
 return 0;
 }
+
+
+string Reduction1::id2dnf (int id){
+	ostringstream oss;
+	std::string binary = std::bitset<64>(id).to_string();
+	for (int i=0 ; i<this->numOfLiterals ; i++){
+		if (binary[64-this->numOfLiterals+i]=='1')
+			oss << i+1 <<" ";
+		else
+			oss << -(i+1) <<" ";
+	}
+	return oss.str();
+}
