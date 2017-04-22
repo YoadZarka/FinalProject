@@ -60,13 +60,13 @@ void Reduction1::parser(){
 				num=line.substr(0,pos);
 				int b;
 				stringstream(num) >> b;  //get the block id number to b
-				if (blocks[b]==0){
+				if (blocks[b-1]==0){
 					this->DNFBlocks.push_back(id2dnf(b));  //call to kidod to blocks dnf
-					blocks[b]=1;
+					blocks[b-1]=1;
 				}
 				//call to kidod to edegs dnf f and b
 				vector<bool> tmpF = this->DNFFile[this->DNFFile.size()-1];
-				vector<bool> tmpB = this->DNFBlocks[this->DNFBlocks.size()-1];
+				vector<bool> tmpB = id2dnf(b);
 				tmpF.insert(tmpF.end(),tmpB.begin(),tmpB.end());
 				this->DNFEdges.push_back(tmpF);
 				line=line.substr(pos+1);
