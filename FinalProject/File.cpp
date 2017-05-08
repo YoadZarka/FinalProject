@@ -23,6 +23,9 @@ File::File(char* path){
 		this->numOfFiles=0;
 }
 
+File::File(){this->numOfBlocks=0;
+this->numOfFiles=0;}
+
 File::~File() {
 	this->myfile.close();
 }

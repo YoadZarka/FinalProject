@@ -20,11 +20,32 @@ Reduction1::Reduction1(char* path) {
 		cout << "There are too many litterals";
 		exit(1);}
 	parser();
-
+	convert2cnf();
+	print();
 }
 
 Reduction1::~Reduction1() {
 	// TODO Auto-generated destructor stub
+}
+
+vector<vector <bool> > Reduction1::dnf2cnf (vector< vector <bool> > dnf){
+	vector< vector <bool> > cnf;
+	vector <bool> subcnf;
+	int numOfExtVar=dnf.size();
+	for (int i; i<numOfExtVar ; i++){
+		subcnf.push_back(true);				//push z=1 as number of clauses
+	}
+	cnf.push_back(subcnf);
+	subcnf.clear();
+	for (int i; i<numOfExtVar ; i++){
+		for (int j; j<this->numOfLiterals ; j++){
+			subcnf.push_back(false);		// push ~z
+			subcnf.push_back(dnf[i][j]);    // push literal j of each clause
+			cnf.push_back(subcnf);
+			subcnf.clear();
+		}
+	}
+	return cnf;
 }
 
 void Reduction1::parser(){
@@ -39,7 +60,7 @@ void Reduction1::parser(){
 			string num = temp_str.substr(0,pos);
 			int f;
 			stringstream(num) >> f;  //get the file id number to f
-			cout << f <<endl;
+			cout <<"File" << f <<endl;
 			this->files.push_back(f);  //add the file id to a vector of all files
 			this->DNFFile.push_back(id2dnf(this->files.size()+this->inputfile->numOfBlocks));  //call the kidod to file dnf with the file index of f + number of blocks
 			line=temp_str.substr(pos+1);
@@ -94,6 +115,37 @@ vector<bool> Reduction1::id2dnf (int id){
 			clause.push_back(false);
 	}
 	return clause;
+}
+
+void Reduction1::convert2cnf(){
+	vector< vector <bool> > cnf;
+	cnf=dnf2cnf(this->DNFFile);
+	this->CNFFile=dnf2cnf(this->DNFFile);
+	this->CNFBlocks=dnf2cnf(this->DNFBlocks);
+	this->CNFEdges=dnf2cnf(this->DNFEdges);
+}
+
+void Reduction1::print(){
+	cout << "DNF files:"<< endl;
+	for (uint i ; i<this->DNFFile.size() ; i++){
+		for (uint j ; j<this->DNFFile[i].size() ; j++){
+			if (this->DNFFile[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
+		}
+		cout<<endl;
+	}
+	for (uint i ; i<this->DNFBlocks.size() ; i++){
+			for (uint j ; j<this->DNFBlocks[i].size() ; j++){
+				if (this->DNFBlocks[i][j]==true)
+					cout << 1;
+				else
+					cout << 0;
+			}
+			cout<<endl;
+	}
+
 }
 
 int main(){

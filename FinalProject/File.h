@@ -19,6 +19,7 @@ public:
 	std::fstream myfile;
 	File(char* path,int reduce);
 	File(char* path);
+	File();
 	virtual ~File();
 	std::string getLine ();
 	void writeLine (std::string line);
