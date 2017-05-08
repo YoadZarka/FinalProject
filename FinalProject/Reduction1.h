@@ -18,7 +18,7 @@ public:
 	void parser();
 	void convert2cnf();
 	void print();
-	std::vector< std::vector <bool> > dnf2cnf (std::vector< std::vector <bool> > dnf);
+	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
@@ -27,6 +27,7 @@ public:
 	std::vector< std::vector <bool> > CNFBlocks;	//store one cnf blocks clause
 	std::vector< std::vector <bool> > CNFEdges;		//store one cnf edges clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
+	std::vector< std::vector <bool> > tempCnf;
 	int numOfLiterals;
 	std::vector<int> files;
 	File* inputfile;
