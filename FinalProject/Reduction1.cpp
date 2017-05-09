@@ -22,7 +22,8 @@ Reduction1::Reduction1(char* path) {
 	parser();
 	this->inputfile->~File();
 	convert2cnf();
-	print();
+	print();              //need to delete in the end
+
 }
 
 Reduction1::~Reduction1() {
