@@ -20,6 +20,7 @@ Reduction1::Reduction1(char* path) {
 		cout << "There are too many litterals";
 		exit(1);}
 	parser();
+	this->inputfile->~File();
 	convert2cnf();
 	print();
 }

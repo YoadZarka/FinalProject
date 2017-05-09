@@ -19,6 +19,7 @@ public:
 	void convert2cnf();
 	void print();
 	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
+	void writeCNF(char* path);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
