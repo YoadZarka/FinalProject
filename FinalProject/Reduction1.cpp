@@ -125,12 +125,9 @@ void Reduction1::convert2cnf(){
 	this->tempCnf.clear();
 	dnf2cnf(this->DNFBlocks);
 	this->CNFBlocks=this->tempCnf;
-	for (uint i=0 ; i<tempCnf.size() ; i++){
-			this->tempCnf[i].clear();
+	for (uint i=0 ; i<this->DNFEdges.size() ; i++){     //Making a negation of the edges clause by de Morgan Law
+		this->DNFEdges[i].flip();
 	}
-	this->tempCnf.clear();
-	dnf2cnf(this->DNFEdges);
-	this->CNFEdges=this->tempCnf;
 }
 
 void Reduction1::print(){
@@ -184,16 +181,6 @@ void Reduction1::print(){
 				}
 				cout<<endl;
 		}
-	cout << "CNF Edges:"<< endl;
-		for (uint i=0 ; i<this->CNFEdges.size() ; i++){
-					for (uint j=0 ; j<this->CNFEdges[i].size() ; j++){
-						if (this->CNFEdges[i][j]==true)
-							cout << 1;
-						else
-							cout << 0;
-					}
-					cout<<endl;
-			}
 }
 
 int main(){
