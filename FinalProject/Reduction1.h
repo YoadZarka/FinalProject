@@ -34,7 +34,6 @@ public:
 	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;
-
 };
 
 #endif /* REDUCTION1_H_ */

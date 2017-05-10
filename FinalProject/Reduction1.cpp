@@ -24,7 +24,6 @@ Reduction1::Reduction1(char* path) {
 	convert2cnf();
 	encodeCNFDiff ();
 	print();              //need to delete in the end
-
 }
 
 Reduction1::~Reduction1() {
