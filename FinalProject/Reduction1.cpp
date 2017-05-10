@@ -22,6 +22,7 @@ Reduction1::Reduction1(char* path) {
 	parser();
 	this->inputfile->~File();
 	convert2cnf();
+	encodeCNFDiff ();
 	print();              //need to delete in the end
 
 }
@@ -30,6 +31,8 @@ Reduction1::~Reduction1() {
 	// TODO Auto-generated destructor stub
 }
 
+/* This function convert one DNF clause into CNF form by adding extra variable as
+ *  the subclause number */
 void Reduction1::dnf2cnf (vector< vector <bool> >& dnf){
 	vector <bool> subcnf;
 	int numOfExtVar=dnf.size();
@@ -48,6 +51,8 @@ void Reduction1::dnf2cnf (vector< vector <bool> >& dnf){
 	}
 }
 
+/*take a filesystem txt file input and encode the files, blocks & edges clauses in DNF
+ * form*/
 void Reduction1::parser(){
 	int blocks [this->inputfile->numOfBlocks]={};
 	string line;
@@ -105,6 +110,7 @@ void Reduction1::parser(){
 	}
 }
 
+/* Auxiliary function for converting an int id number to its DNF binary representation*/
 vector<bool> Reduction1::id2dnf (int id){
 	vector<bool> clause;
 	std::string binary = std::bitset<64>(id).to_string();
@@ -117,8 +123,21 @@ vector<bool> Reduction1::id2dnf (int id){
 	return clause;
 }
 
-void Reduction1::convert2cnf(){
 
+void Reduction1::encodeCNFDiff (){
+	vector<bool> cnfxor;				//one xor of 2 vars a,b is (a or b) and (~a or ~b)
+	cnfxor.push_back(true);
+	cnfxor.push_back(true);
+	for (int i=0 ; i<this->numOfLiterals ; i++){
+		this->CNFDiff.push_back(cnfxor);
+		cnfxor.flip();
+		this->CNFDiff.push_back(cnfxor);
+		cnfxor.flip();
+	}
+}
+
+
+void Reduction1::convert2cnf(){
 	dnf2cnf(this->DNFFile);
 	this->CNFFile=this->tempCnf;
 	for (uint i=0 ; i<tempCnf.size() ; i++){
@@ -183,6 +202,16 @@ void Reduction1::print(){
 				}
 				cout<<endl;
 		}
+	cout << "CNF Diff:"<< endl;
+		for (uint i=0 ; i<this->CNFDiff.size() ; i++){
+					for (uint j=0 ; j<this->CNFDiff[i].size() ; j++){
+						if (this->CNFDiff[i][j]==true)
+							cout << 1;
+						else
+							cout << 0;
+					}
+					cout<<endl;
+			}
 }
 
 int main(){
