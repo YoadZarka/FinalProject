@@ -16,7 +16,9 @@ File::File(char* path, int reduce) {
 }
 
 File::File(char* path){
-	this->myfile.open(path,ios::app);
+	this->myfile.open(path, std::ofstream::out | std::ofstream::trunc);
+	this->myfile.close();
+	this->myfile.open(path,ios::out);
 		if (!this->myfile.is_open())
 			cout << "Unable to open file";
 		this->numOfBlocks=0;

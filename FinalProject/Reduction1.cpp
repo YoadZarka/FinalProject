@@ -13,7 +13,7 @@
 
 using namespace std;
 
-Reduction1::Reduction1(char* path) {
+Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	this->inputfile = new File (path,1);
 	this->numOfLiterals = (int)(log2((double)(inputfile->numOfBlocks+inputfile->numOfFiles))+1);
 	if (this->numOfLiterals>63){
@@ -23,6 +23,7 @@ Reduction1::Reduction1(char* path) {
 	this->inputfile->~File();
 	convert2cnf();
 	encodeCNFDiff ();
+	writeCNF(delFiles, delBlocks);
 	print();              //need to delete in the end
 }
 
@@ -139,15 +140,101 @@ void Reduction1::encodeCNFDiff (){
 void Reduction1::convert2cnf(){
 	dnf2cnf(this->DNFFile);
 	this->CNFFile=this->tempCnf;
+	/*clean the temp vector*/
 	for (uint i=0 ; i<tempCnf.size() ; i++){
 		this->tempCnf[i].clear();
 	}
 	this->tempCnf.clear();
 	dnf2cnf(this->DNFBlocks);
 	this->CNFBlocks=this->tempCnf;
+
 	for (uint i=0 ; i<this->DNFEdges.size() ; i++){     //Making a negation of the edges clause by de Morgan Law
 		this->DNFEdges[i].flip();
 	}
+}
+
+void Reduction1::writeCNF(int delFiles, int delBlocks){
+	this->totalLiterals=(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+(this->inputfile->numOfFiles*(this->inputfile->numOfFiles-delFiles))+(this->inputfile->numOfBlocks*delBlocks);
+	this->firstFile =1;
+	this->firstBlock =(numOfLiterals*(this->inputfile->numOfFiles-delFiles))+1;
+	this->firstZvar =(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+1;
+	string str1 = "SATinput.cnf";
+	char *cstr = &str1[0u];
+	this->outputfile = new File (cstr);
+	this->outputfile->writeLine("c  SATinput.cnf");
+	this->outputfile->writeLine("c");
+	this->outputfile->writeLine("p cnf Var Clause");
+	/* writing the cnf files clause to the cnf solver input file*/
+	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){
+		stringstream ss;
+		string str;
+		for (uint j=0 ; j<this->CNFFile[0].size() ; j++){
+			ss << (this->firstZvar+(i*this->inputfile->numOfFiles)+j) << " ";
+		}
+		ss << "0";
+		str=ss.str();
+		this->outputfile->writeLine(str);
+		ss.str("");
+		str="";
+
+		int n = this->CNFFile.size();
+		for (int j=1 ; j<n ; j++){
+			if (this->CNFFile[j][0]==true){
+				ss << this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->inputfile->numOfFiles)<<" ";
+			}
+			else{
+				ss << -(this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->inputfile->numOfFiles))<<" ";
+			}
+			if (this->CNFFile[j][1]==true){
+				ss << firstFile+(i*this->inputfile->numOfFiles)+((j-1)%this->numOfLiterals)<<" ";
+			}
+			else{
+				ss << -(firstFile+(i*this->inputfile->numOfFiles)+((j-1)%this->numOfLiterals))<<" ";
+			}
+			ss << "0";
+			str=ss.str();
+			this->outputfile->writeLine(str);
+			ss.str("");
+			str="";
+		}
+	}
+	/* writing the cnf blocks clause to the cnf solver input file*/
+	this->firstZvar =this->firstZvar +((this->inputfile->numOfFiles-delFiles)*this->CNFFile[0].size());
+	int zBlnum=CNFBlocks[0].size();      //number of z for the blocks clause
+	for (int i=0 ; i<(delBlocks) ; i++){
+		stringstream ss;
+		string str;
+		for (uint j=0 ; j<this->CNFBlocks[0].size() ; j++){
+			ss << (this->firstZvar+(i*zBlnum)+j) << " ";
+		}
+		ss << "0";
+		str=ss.str();
+		this->outputfile->writeLine(str);
+		ss.str("");
+		str="";
+
+		int n = this->CNFBlocks.size();
+		for (int j=1 ; j<n ; j++){
+				if (this->CNFBlocks[j][0]==true){
+					ss << this->firstZvar+(i*zBlnum)+((j-1)/zBlnum)<<" ";
+				}
+				else{
+					ss << -(this->firstZvar+(i*zBlnum)+((j-1)/zBlnum))<<" ";
+				}
+				if (this->CNFBlocks[j][1]==true){
+					ss << this->firstBlock+(i*zBlnum)+((j-1)%this->numOfLiterals)<<" ";
+				}
+				else{
+					ss << -(this->firstBlock+(i*zBlnum)+((j-1)%this->numOfLiterals))<<" ";
+				}
+				ss << "0";
+				str=ss.str();
+				this->outputfile->writeLine(str);
+				ss.str("");
+				str="";
+			}
+		}
+	this->outputfile->~File();
 }
 
 void Reduction1::print(){
@@ -191,7 +278,7 @@ void Reduction1::print(){
 				}
 				cout<<endl;
 		}
-	cout << "DNF Edges:"<< endl;
+	cout << "CNF Edges:"<< endl;
 	for (uint i=0 ; i<this->DNFEdges.size() ; i++){
 				for (uint j=0 ; j<this->DNFEdges[i].size() ; j++){
 					if (this->DNFEdges[i][j]==true)
@@ -216,6 +303,6 @@ void Reduction1::print(){
 int main(){
 	string str = "filesystems_0145.txt";
 	char *cstr = &str[0u];
-	Reduction1 r (cstr);
+	Reduction1 r (cstr,2,3);
 return 0;
 }
