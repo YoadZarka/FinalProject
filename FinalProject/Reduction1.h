@@ -20,6 +20,7 @@ public:
 	void print();
 	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
 	void encodeCNFDiff ();
+	int summtion (int delFiles, int delBlocks);
 	void writeCNF(int delFiles, int delBlocks);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause

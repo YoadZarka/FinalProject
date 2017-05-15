@@ -153,14 +153,30 @@ void Reduction1::convert2cnf(){
 	}
 }
 
+int Reduction1::summtion (int delFiles, int delBlocks){
+	int sum=0;
+	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
+		for (int j=i+1 ; j<(this->inputfile->numOfFiles-delFiles) ; j++){
+			sum++;
+		}
+	}
+	for (int i=0 ; i<(delBlocks) ; i++){    		 // i=0 to k'
+		for (int j=i+1 ; j<(delBlocks) ; j++){
+			sum++;
+		}
+	}
+	return sum;
+}
+
 void Reduction1::writeCNF(int delFiles, int delBlocks){
 	int zBlnum=CNFBlocks[0].size();      //number of z for the blocks clause
 	this->totalLiterals=(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+(this->inputfile->numOfFiles*(this->inputfile->numOfFiles-delFiles))+(zBlnum*delBlocks);
 	this->firstFile =1;
 	this->firstBlock =(numOfLiterals*(this->inputfile->numOfFiles-delFiles))+1;
 	this->firstZvar =(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+1;
+	int numOfDiff = summtion(delFiles,delBlocks);
 	// need to fix
-	int numOfClauses = (this->CNFFile.size()*this->inputfile->numOfFiles-delFiles) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)+delBlocks) + (2*this->numOfLiterals*(delBlocks)));
+	int numOfClauses = (this->CNFFile.size()*(this->inputfile->numOfFiles-delFiles)) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)*delBlocks) + (2*this->numOfLiterals*numOfDiff));
 	//
 	string str2 = "SATinput.cnf";
 	char *cstr = &str2[0u];
