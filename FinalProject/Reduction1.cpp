@@ -36,7 +36,7 @@ Reduction1::~Reduction1() {
 void Reduction1::dnf2cnf (vector< vector <bool> >& dnf){
 	vector <bool> subcnf;
 	int numOfExtVar=dnf.size();
-	for (int i; i<numOfExtVar ; i++){
+	for (int i=0; i<numOfExtVar ; i++){
 		subcnf.push_back(true);				//push z=1 as number of clauses
 	}
 	this->tempCnf.push_back(subcnf);
@@ -136,7 +136,6 @@ void Reduction1::encodeCNFDiff (){
 	}
 }
 
-
 void Reduction1::convert2cnf(){
 	dnf2cnf(this->DNFFile);
 	this->CNFFile=this->tempCnf;
@@ -145,6 +144,7 @@ void Reduction1::convert2cnf(){
 		this->tempCnf[i].clear();
 	}
 	this->tempCnf.clear();
+	/*						*/
 	dnf2cnf(this->DNFBlocks);
 	this->CNFBlocks=this->tempCnf;
 
@@ -154,16 +154,26 @@ void Reduction1::convert2cnf(){
 }
 
 void Reduction1::writeCNF(int delFiles, int delBlocks){
-	this->totalLiterals=(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+(this->inputfile->numOfFiles*(this->inputfile->numOfFiles-delFiles))+(this->inputfile->numOfBlocks*delBlocks);
+	int zBlnum=CNFBlocks[0].size();      //number of z for the blocks clause
+	this->totalLiterals=(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+(this->inputfile->numOfFiles*(this->inputfile->numOfFiles-delFiles))+(zBlnum*delBlocks);
 	this->firstFile =1;
 	this->firstBlock =(numOfLiterals*(this->inputfile->numOfFiles-delFiles))+1;
 	this->firstZvar =(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+1;
-	string str1 = "SATinput.cnf";
-	char *cstr = &str1[0u];
+	// need to fix
+	int numOfClauses = (this->CNFFile.size()*this->inputfile->numOfFiles-delFiles) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)+delBlocks) + (2*this->numOfLiterals*(delBlocks)));
+	//
+	string str2 = "SATinput.cnf";
+	char *cstr = &str2[0u];
 	this->outputfile = new File (cstr);
 	this->outputfile->writeLine("c  SATinput.cnf");
 	this->outputfile->writeLine("c");
-	this->outputfile->writeLine("p cnf Var Clause");
+	stringstream ss1;
+	string str1;
+	ss1 << "p cnf "<< this->totalLiterals <<" "<<numOfClauses;
+	str1=ss1.str();
+	this->outputfile->writeLine(str1);
+	ss1.str("");
+	str1="";
 	/* writing the cnf files clause to the cnf solver input file*/
 	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){
 		stringstream ss;
@@ -186,10 +196,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 				ss << -(this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->inputfile->numOfFiles))<<" ";
 			}
 			if (this->CNFFile[j][1]==true){
-				ss << firstFile+(i*this->inputfile->numOfFiles)+((j-1)%this->numOfLiterals)<<" ";
+				ss << firstFile+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
 			}
 			else{
-				ss << -(firstFile+(i*this->inputfile->numOfFiles)+((j-1)%this->numOfLiterals))<<" ";
+				ss << -(firstFile+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals))<<" ";
 			}
 			ss << "0";
 			str=ss.str();
@@ -198,9 +208,9 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 			str="";
 		}
 	}
+
 	/* writing the cnf blocks clause to the cnf solver input file*/
 	this->firstZvar =this->firstZvar +((this->inputfile->numOfFiles-delFiles)*this->CNFFile[0].size());
-	int zBlnum=CNFBlocks[0].size();      //number of z for the blocks clause
 	for (int i=0 ; i<(delBlocks) ; i++){
 		stringstream ss;
 		string str;
@@ -222,10 +232,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 					ss << -(this->firstZvar+(i*zBlnum)+((j-1)/zBlnum))<<" ";
 				}
 				if (this->CNFBlocks[j][1]==true){
-					ss << this->firstBlock+(i*zBlnum)+((j-1)%this->numOfLiterals)<<" ";
+					ss << this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
 				}
 				else{
-					ss << -(this->firstBlock+(i*zBlnum)+((j-1)%this->numOfLiterals))<<" ";
+					ss << -(this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals))<<" ";
 				}
 				ss << "0";
 				str=ss.str();
@@ -234,6 +244,80 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 				str="";
 			}
 		}
+
+	/* writing the cnf edges clause to the cnf solver input file*/
+	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
+		stringstream ss;
+		string str;
+		for (int j=0 ; j<delBlocks ; j++){									// j=0 to k'
+			for (int s=0 ; s<(int)this->DNFEdges.size() ; s++){				// s=0 to num of edges
+				for (int u=1 ; u<(int)this->DNFEdges[s].size()+1 ; u++){	// u=1 to numOfLiterals*2
+					if ((u / (this->numOfLiterals+1))==0){   				//this is file encode
+						if (this->DNFEdges[s][u-1]==1)  ss << this->firstFile+(i*this->numOfLiterals)+((u-1)%this->numOfLiterals)<<" ";
+						else ss << -(this->firstFile+(i*this->numOfLiterals)+((u-1)%this->numOfLiterals))<<" ";
+					}
+					else{
+						if (this->DNFEdges[s][u-1]==1)  ss << this->firstBlock+(j*this->numOfLiterals)+((u-1)%this->numOfLiterals)<<" ";
+						else ss << -(this->firstBlock+(j*this->numOfLiterals)+((u-1)%this->numOfLiterals))<<" ";
+					}
+				}
+				ss << "0";
+				str=ss.str();
+				this->outputfile->writeLine(str);
+				ss.str("");
+				str="";
+			}
+		}
+	}
+
+	/* writing the cnf files difference clause to the cnf solver input file*/
+	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
+		stringstream ss;
+		string str;
+		for (int j=i+1 ; j<(this->inputfile->numOfFiles-delFiles) ; j++){	// j=i+1 to m-k
+			for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
+				ss << this->firstFile+(i*this->numOfLiterals)+s<<" ";
+				ss << this->firstFile+(j*this->numOfLiterals)+s<<" ";
+				ss << "0";
+				str=ss.str();
+				this->outputfile->writeLine(str);
+				ss.str("");
+				str="";
+				ss << -(this->firstFile+(i*this->numOfLiterals)+s)<<" ";
+				ss << -(this->firstFile+(j*this->numOfLiterals)+s)<<" ";
+				ss << "0";
+				str=ss.str();
+				this->outputfile->writeLine(str);
+				ss.str("");
+				str="";
+			}
+		}
+	}
+
+	/* writing the cnf files difference clause to the cnf solver input file*/
+		for (int i=0 ; i<(delBlocks) ; i++){    		 // i=0 to k'
+			stringstream ss;
+			string str;
+			for (int j=i+1 ; j<(delBlocks) ; j++){	// j=i+1 to k'
+				for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
+					ss << this->firstBlock+(i*this->numOfLiterals)+s<<" ";
+					ss << this->firstBlock+(j*this->numOfLiterals)+s<<" ";
+					ss << "0";
+					str=ss.str();
+					this->outputfile->writeLine(str);
+					ss.str("");
+					str="";
+					ss << -(this->firstBlock+(i*this->numOfLiterals)+s)<<" ";
+					ss << -(this->firstBlock+(j*this->numOfLiterals)+s)<<" ";
+					ss << "0";
+					str=ss.str();
+					this->outputfile->writeLine(str);
+					ss.str("");
+					str="";
+				}
+			}
+		}
+
 	this->outputfile->~File();
 }
 
