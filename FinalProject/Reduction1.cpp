@@ -20,11 +20,15 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 		cout << "There are too many litterals";
 		exit(1);}
 	parser();
+	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
+		cout << "The k or k' input is too big";
+		exit(1);}
 	this->inputfile->~File();
 	convert2cnf();
 	encodeCNFDiff ();
 	writeCNF(delFiles, delBlocks);
-	print();              //need to delete in the end
+	cout << "all done!";
+	//print();              //need to delete in the end
 }
 
 Reduction1::~Reduction1() {
@@ -54,7 +58,7 @@ void Reduction1::dnf2cnf (vector< vector <bool> >& dnf){
 /*take a filesystem txt file input and encode the files, blocks & edges clauses in DNF
  * form*/
 void Reduction1::parser(){
-	int blocks [this->inputfile->numOfBlocks]={};
+	vector<bool> blocks (this->inputfile->numOfBlocks,false);
 	string line;
 	line=this->inputfile->getLine();
 	while (line != "***end***"){
@@ -65,7 +69,7 @@ void Reduction1::parser(){
 			string num = temp_str.substr(0,pos);
 			int f;
 			stringstream(num) >> f;  //get the file id number to f
-			cout <<"File" << f <<endl;
+			//cout <<"File" << f <<endl;
 			this->files.push_back(f);  //add the file id to a vector of all files
 			this->DNFFile.push_back(id2dnf(this->files.size()+this->inputfile->numOfBlocks));  //call the kidod to file dnf with the file index of f + number of blocks
 			line=temp_str.substr(pos+1);
@@ -80,15 +84,15 @@ void Reduction1::parser(){
 			stringstream(num) >> bn;  //get the number of connected blocks to the file in same line
 			pos=line.find(",")+1;
 			temp_str=line.substr(pos);
-			line = temp_str;
+			line=temp_str.substr(0);
 			for (int i=0 ; i<bn ;i++){
 				pos=line.find(",");
 				num=line.substr(0,pos);
 				int b;
 				stringstream(num) >> b;  //get the block id number to b
-				if (blocks[b-1]==0){
+				if (blocks[b]==false){
 					this->DNFBlocks.push_back(id2dnf(b));  //call to kidod to blocks dnf
-					blocks[b-1]=1;
+					blocks[b]=true;
 				}
 				//call to kidod to edegs dnf f and b
 				vector<bool> tmpF = this->DNFFile[this->DNFFile.size()-1];
@@ -125,14 +129,23 @@ vector<bool> Reduction1::id2dnf (int id){
 
 
 void Reduction1::encodeCNFDiff (){
+	int n=pow(2,this->numOfLiterals);
 	vector<bool> cnfxor;				//one xor of 2 vars a,b is (a or b) and (~a or ~b)
-	cnfxor.push_back(true);
-	cnfxor.push_back(true);
+	cnfxor.resize(this->numOfLiterals);
+	for (int i=0 ; i<n ; i++){
+		this->CNFDiff.push_back(cnfxor);
+	}
 	for (int i=0 ; i<this->numOfLiterals ; i++){
-		this->CNFDiff.push_back(cnfxor);
-		cnfxor.flip();
-		this->CNFDiff.push_back(cnfxor);
-		cnfxor.flip();
+		bool flag=false;
+		int cnt=0;
+		for (int j=0 ; j<n ; j++){
+			if (cnt==pow(2,i)){
+				flag=!flag;
+				cnt=0;
+			}
+			this->CNFDiff[j][i]=flag;
+			cnt++;
+		}
 	}
 }
 
@@ -176,7 +189,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	this->firstZvar =(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+1;
 	int numOfDiff = summtion(delFiles,delBlocks);
 	// need to fix
-	int numOfClauses = (this->CNFFile.size()*(this->inputfile->numOfFiles-delFiles)) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)*delBlocks) + (2*this->numOfLiterals*numOfDiff));
+	uint numOfClauses = (this->CNFFile.size()*(this->inputfile->numOfFiles-delFiles)) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)*delBlocks) + (2*this->numOfLiterals*numOfDiff));
 	//
 	string str2 = "SATinput.cnf";
 	char *cstr = &str2[0u];
@@ -291,16 +304,17 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 		stringstream ss;
 		string str;
 		for (int j=i+1 ; j<(this->inputfile->numOfFiles-delFiles) ; j++){	// j=i+1 to m-k
-			for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
-				ss << this->firstFile+(i*this->numOfLiterals)+s<<" ";
-				ss << this->firstFile+(j*this->numOfLiterals)+s<<" ";
-				ss << "0";
-				str=ss.str();
-				this->outputfile->writeLine(str);
-				ss.str("");
-				str="";
-				ss << -(this->firstFile+(i*this->numOfLiterals)+s)<<" ";
-				ss << -(this->firstFile+(j*this->numOfLiterals)+s)<<" ";
+			for (uint w=0 ; w<this->CNFDiff.size() ; w++){
+				for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
+					if (this->CNFDiff[w][s]==true){
+						ss << this->firstFile+(i*this->numOfLiterals)+s<<" ";
+						ss << this->firstFile+(j*this->numOfLiterals)+s<<" ";
+					}
+					else{
+						ss << -(this->firstFile+(i*this->numOfLiterals)+s)<<" ";
+						ss << -(this->firstFile+(j*this->numOfLiterals)+s)<<" ";
+					}
+				}
 				ss << "0";
 				str=ss.str();
 				this->outputfile->writeLine(str);
@@ -315,16 +329,17 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 			stringstream ss;
 			string str;
 			for (int j=i+1 ; j<(delBlocks) ; j++){	// j=i+1 to k'
-				for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
-					ss << this->firstBlock+(i*this->numOfLiterals)+s<<" ";
-					ss << this->firstBlock+(j*this->numOfLiterals)+s<<" ";
-					ss << "0";
-					str=ss.str();
-					this->outputfile->writeLine(str);
-					ss.str("");
-					str="";
-					ss << -(this->firstBlock+(i*this->numOfLiterals)+s)<<" ";
-					ss << -(this->firstBlock+(j*this->numOfLiterals)+s)<<" ";
+				for (uint w=0 ; w<this->CNFDiff.size() ; w++){
+					for (int s=0 ; s<this->numOfLiterals ; s++){					// writing xor of every 2 literals in the numOfLiterals
+						if (this->CNFDiff[w][s]==true){
+							ss << this->firstBlock+(i*this->numOfLiterals)+s<<" ";
+							ss << this->firstBlock+(j*this->numOfLiterals)+s<<" ";
+						}
+						else{
+							ss << -(this->firstBlock+(i*this->numOfLiterals)+s)<<" ";
+							ss << -(this->firstBlock+(j*this->numOfLiterals)+s)<<" ";
+						}
+					}
 					ss << "0";
 					str=ss.str();
 					this->outputfile->writeLine(str);
@@ -401,8 +416,8 @@ void Reduction1::print(){
 }
 
 int main(){
-	string str = "filesystems_0145.txt";
+	string str = "input_test.txt";
 	char *cstr = &str[0u];
-	Reduction1 r (cstr,2,3);
+	Reduction1 r (cstr,2,2);
 return 0;
 }
