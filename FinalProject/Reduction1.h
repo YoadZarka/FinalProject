@@ -10,7 +10,12 @@
 #include "File.h"
 #include <vector>
 
-
+/* The files and blocks are represent by there SN in the input file, first the blocks
+ * starts from 0 (as in the input file) and the files are continuous after it. the real
+ * file SN stored in "vector<int> files" so we can retrieve from the solver result.
+ * Dont forget that the Solver result describe the files we want to keep
+ * and blocks we want to delete.
+ */
 class Reduction1 {
 public:
 	Reduction1(char* path, int delFiles, int delBlocks);
@@ -19,7 +24,8 @@ public:
 	void convert2cnf();
 	void print();
 	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
-	void encodeCNFDiff ();
+	//void encodeCNFDiff ();
+	void encodeDNFDiff ();
 	int summtion (int delFiles, int delBlocks);
 	void writeCNF(int delFiles, int delBlocks);
 	std::vector<bool> id2dnf (int id);
@@ -29,6 +35,7 @@ public:
 	std::vector< std::vector <bool> > CNFFile;      //store one cnf files clause
 	std::vector< std::vector <bool> > CNFBlocks;	//store one cnf blocks clause
 //	std::vector< std::vector <bool> > CNFEdges;		//store one cnf edges clause
+	std::vector< std::vector <bool> > DNFDiff;		//store one dnf difference check clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
 	std::vector< std::vector <bool> > tempCnf;		//using in the cnf convert function
 	int numOfLiterals;
