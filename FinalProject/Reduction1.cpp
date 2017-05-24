@@ -374,10 +374,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	/* writing the cnf blocks difference clause to the cnf solver input file*/
 		this->firstZvar =this->firstZvar + numOfZ;
 		numOfZ=0;
-		for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
+		for (int i=0 ; i<(delBlocks) ; i++){    		 // i=0 to k'
 			stringstream ss;
 			string str;
-			for (int j=i+1 ; j<(this->inputfile->numOfFiles-delFiles) ; j++){	// j=i+1 to m-k
+			for (int j=i+1 ; j<(delBlocks) ; j++){	// j=i+1 to k'
 				//write the z clause
 				for (uint z=0 ; z<this->CNFDiff[0].size() ; z++){
 								ss << (this->firstZvar + numOfZ) << " ";
@@ -537,7 +537,7 @@ void Reduction1::print(){
 }
 
 int main(){
-	string str = "input_test.txt";
+	string str = "heuristic_targetBlocks_1_threshold_0_filesystems_0143_to_0143_output.txt";
 	char *cstr = &str[0u];
 	Reduction1 r (cstr,2,2);
 return 0;
