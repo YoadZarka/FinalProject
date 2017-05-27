@@ -214,10 +214,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	// need to fix
 	uint numOfClauses = (this->CNFFile.size()*(this->inputfile->numOfFiles-delFiles)) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)*delBlocks) + ((1+4*this->numOfLiterals)*numOfDiff));
 	//
-	string str2 = "SATinput.cnf";
-	char *cstr = &str2[0u];
+	string outputName = "SAT_R1_input.cnf";
+	char *cstr = &outputName[0u];
 	this->outputfile = new File (cstr);
-	this->outputfile->writeLine("c  SATinput.cnf");
+	this->outputfile->writeLine("c  SAT_R1_input.cnf");
 	this->outputfile->writeLine("c");
 	stringstream ss1;
 	string str1;
@@ -534,11 +534,4 @@ void Reduction1::print(){
 					}
 					cout<<endl;
 			}
-}
-
-int main(){
-	string str = "heuristic_targetBlocks_1_threshold_0_filesystems_0143_to_0143_output.txt";
-	char *cstr = &str[0u];
-	Reduction1 r (cstr,2,2);
-return 0;
 }
