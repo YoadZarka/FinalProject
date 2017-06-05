@@ -11,7 +11,7 @@ using namespace std;
 File::File(char* path, int reduce) {
 	this->myfile.open(path,ios::in);
 	if (!this->myfile.is_open())
-		cout << "Unable to open file";
+		cout << "Unable to open file"<<endl;
 	readNumFilesBlocks();
 }
 
@@ -20,7 +20,7 @@ File::File(char* path){
 	this->myfile.close();
 	this->myfile.open(path,ios::out);
 		if (!this->myfile.is_open())
-			cout << "Unable to open file";
+			cout << "Unable to open file"<<endl;
 		this->numOfBlocks=0;
 		this->numOfFiles=0;
 }
@@ -64,7 +64,7 @@ void File::writeLine (string line) {
 	    this->myfile << line+"\n";
 	  }
 	  else
-	  { cout << "Unable to open file";
+	  { cout << "Unable to open file"<<endl;
 	  	  	exit(1);
 	  }
 }

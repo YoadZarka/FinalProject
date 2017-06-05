@@ -28,7 +28,7 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	convert2cnf();
 	//encodeCNFDiff ();
 	writeCNF(delFiles, delBlocks);
-	cout << "all done!";
+	cout << "all done!"<<endl;
 	//print();              //need to delete in the end
 }
 
@@ -242,10 +242,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 		int n = this->CNFFile.size();
 		for (int j=1 ; j<n ; j++){
 			if (this->CNFFile[j][0]==true){
-				ss << this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->inputfile->numOfFiles)<<" ";
+				ss << this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->numOfLiterals)<<" ";
 			}
 			else{
-				ss << -(this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->inputfile->numOfFiles))<<" ";
+				ss << -(this->firstZvar+(i*this->inputfile->numOfFiles)+((j-1)/this->numOfLiterals))<<" ";
 			}
 			if (this->CNFFile[j][1]==true){
 				ss << firstFile+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
@@ -278,10 +278,10 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 		int n = this->CNFBlocks.size();
 		for (int j=1 ; j<n ; j++){
 				if (this->CNFBlocks[j][0]==true){
-					ss << this->firstZvar+(i*zBlnum)+((j-1)/zBlnum)<<" ";
+					ss << this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals)<<" ";
 				}
 				else{
-					ss << -(this->firstZvar+(i*zBlnum)+((j-1)/zBlnum))<<" ";
+					ss << -(this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals))<<" ";
 				}
 				if (this->CNFBlocks[j][1]==true){
 					ss << this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
@@ -341,7 +341,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 			str="";
 			for (int s=1 ; s<(this->numOfLiterals*2)+1 ; s++){
 				int temp=numOfZ -(this->numOfLiterals*2)+s-1;
-				if (this->CNFDiff[s][1]==true){
+				if (this->CNFDiff[(s-1)*2+1][1]==true){
 					ss << -(this->firstZvar + temp) << " ";
 					ss << this->firstFile + (i*this->numOfLiterals)+((s-1)/2)<<" ";  //literal a
 				}
@@ -354,7 +354,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 				this->outputfile->writeLine(str);
 				ss.str("");
 				str="";
-				if (this->CNFDiff[s+1][1]==true){
+				if (this->CNFDiff[(s-1)*2+2][1]==true){
 					ss << -(this->firstZvar + temp) << " ";
 					ss << this->firstFile + (j*this->numOfLiterals)+((s-1)/2)<<" ";  //literal b
 				}
@@ -390,7 +390,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 				str="";
 				for (int s=1 ; s<(this->numOfLiterals*2)+1 ; s++){
 					int temp=numOfZ -(this->numOfLiterals*2)+s-1;
-					if (this->CNFDiff[s][1]==true){
+					if (this->CNFDiff[(s-1)*2+1][1]==true){
 						ss << -(this->firstZvar + temp) << " ";
 						ss << this->firstBlock + (i*this->numOfLiterals)+((s-1)/2)<<" ";  //literal a
 					}
@@ -403,7 +403,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 					this->outputfile->writeLine(str);
 					ss.str("");
 					str="";
-					if (this->CNFDiff[s+1][1]==true){
+					if (this->CNFDiff[(s-1)*2+2][1]==true){
 						ss << -(this->firstZvar + temp) << " ";
 						ss << this->firstBlock + (j*this->numOfLiterals)+((s-1)/2)<<" ";  //literal b
 					}

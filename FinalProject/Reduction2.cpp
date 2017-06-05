@@ -19,7 +19,7 @@ Reduction2::Reduction2(char* path, int32_t delFiles, int32_t delBlocks) {
 	this->inputfile = new File (path,1);
 	parser();
 	writeCNF (delFiles,delBlocks);
-	cout << "all done!!";
+	cout << "all done!!"<<endl;
 }
 
 Reduction2::~Reduction2() {
@@ -134,13 +134,4 @@ void Reduction2::writeCNF(int32_t delFiles, int32_t delBlocks){
 	writeVec(this->BAtLeastCNF);
 	writeVec(this->FAtMostCNF);
 	this->outputfile->~File();
-}
-
-
-
-int main(){
-	string str = "input_test.txt";
-	char *cstr = &str[0u];
-	Reduction2 r (cstr,3,1);
-return 0;
 }
