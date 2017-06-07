@@ -19,6 +19,7 @@
 class Reduction1 {
 public:
 	Reduction1(char* path, int delFiles, int delBlocks);
+	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks);
 	virtual ~Reduction1();
 	void parser();
 	void convert2cnf();
@@ -28,21 +29,25 @@ public:
 	void encodeDNFDiff ();
 	int summtion (int delFiles, int delBlocks);
 	void writeCNF(int delFiles, int delBlocks);
+	void liteParser();
+	int fromBin(long n);
+	std::string decodedOutput (int delFiles, int delBlocks);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
 	std::vector< std::vector <bool> > DNFEdges;		//store one dnf edges clause
 	std::vector< std::vector <bool> > CNFFile;      //store one cnf files clause
 	std::vector< std::vector <bool> > CNFBlocks;	//store one cnf blocks clause
-//	std::vector< std::vector <bool> > CNFEdges;		//store one cnf edges clause
 	std::vector< std::vector <bool> > DNFDiff;		//store one dnf difference check clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
 	std::vector< std::vector <bool> > tempCnf;		//using in the cnf convert function
-	int numOfLiterals;
-	int totalLiterals;
-	int firstFile;
-	int firstBlock;
-	int firstZvar;
+	std::vector<int> blocksSize;
+	int TotalblocksSize=0;							//save the total blocks size (bytes) in the output parsing
+	int numOfLiterals=0;
+	int totalLiterals=0;
+	int firstFile=0;
+	int firstBlock=0;
+	int firstZvar=0;
 	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;

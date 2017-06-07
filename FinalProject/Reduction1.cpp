@@ -420,6 +420,127 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 			}
 		}
 
+		this->outputfile->~File();
+	}
+
+void Reduction1::liteParser(){
+	this->blocksSize (this->inputfile->numOfBlocks,0);
+	string line;
+	line=this->inputfile->getLine();
+	while (line != "***end***"){
+		if (line.at(0) == 'F'){
+			size_t pos=line.find(",")+1;
+			string temp_str=line.substr(pos);
+			pos=temp_str.find(",");
+			string num = temp_str.substr(0,pos);
+			int f;
+			stringstream(num) >> f;  //get the file id number to f
+			this->files.push_back(f);  //add the file id to a vector of all files
+			line=temp_str.substr(pos+1);
+			for (int i=0; i<2 ; i++){
+				size_t pos=line.find(",")+1;
+				string temp_str=line.substr(pos);
+				line = temp_str;
+			}
+			pos=line.find(",");
+			num = line.substr(0,pos);
+			int bn;
+			stringstream(num) >> bn;  //get the number of connected blocks to the file in same line
+			pos=line.find(",")+1;
+			temp_str=line.substr(pos);
+			line=temp_str.substr(0);
+			for (int i=0 ; i<bn ;i++){
+				pos=line.find(",");
+				num=line.substr(0,pos);
+				int b;
+				stringstream(num) >> b;  //get the block id number to b
+				line=line.substr(pos+1);
+				pos=line.find(",");
+				num=line.substr(0,pos);
+				int size;
+				stringstream(num) >> size;  //get the block size of b
+				line=line.substr(pos+1);
+				if (this->blocksSize[b]==0)
+					this->blocksSize[b]=size;  //save the block size at b cell in the vector
+			}
+			line=this->inputfile->getLine();
+		}
+		else
+			line=this->inputfile->getLine();
+
+		if (line.at(0) == 'B'){
+			break;
+		}
+	}
+	for (int j=0 ; j<this->blocksSize.size() ; j++){
+		this->TotalblocksSize = this->TotalblocksSize + this->blocksSize[j];
+	}
+}
+
+int Reduction1::fromBin(long n){
+    long factor = 1;
+    long total = 0;
+
+    while (n != 0)
+    {
+        total += (n%10) * factor;
+        n /= 10;
+        factor *= 2;
+    }
+
+    return (int)total;
+}
+
+string Reduction1::decodedOutput (int delFiles, int delBlocks){
+	string line;
+	vector <int> deletedBlocks;
+	vector <int> deletedFiles;
+	line=this->outputfile->getLine();
+	if (line=="UNSAT")
+		return "UNSAT";
+	if (line=="SAT"){
+		line=this->outputfile->getLine();
+		for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){
+			stringstream ss;
+			for (int j=0 ; j<this->numOfLiterals ; j++){
+				size_t pos=line.find(" ");
+				string temp_str=line.substr(0,pos);
+				pos++;
+				int bit;
+				stringstream(temp_str) >> bit;  //get the file id number to f
+				if (bit>0)
+					ss << 1;
+				else
+					ss << 0;
+				line = line.substr(pos);
+			}
+			int file_bit;
+			ss >> file_bit;
+			int file_id = fromBin(file_bit);
+			deletedFiles.push_back(this->files[file_id]);
+		}
+		for (int i=0 ; i<delBlocks ; i++){
+			stringstream ss;
+			for (int j=0 ; j<this->numOfLiterals ; j++){
+				size_t pos=line.find(" ");
+				string temp_str=line.substr(0,pos);
+				pos++;
+				int bit;
+				stringstream(temp_str) >> bit;  //get the file id number to f
+				if (bit>0)
+					ss << 1;
+				else
+					ss << 0;
+				line = line.substr(pos);
+			}
+			int block_bit;
+			ss >> block_bit;
+			int block_id = fromBin(block_bit);
+			deletedBlocks.push_back(block_id);
+		}
+	}
+}
+
 //	/* writing the cnf files difference clause to the cnf solver input file*/
 //	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
 //		stringstream ss;
@@ -470,8 +591,6 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 //			}
 //		}
 
-	this->outputfile->~File();
-}
 
 void Reduction1::print(){
 	cout << "DNF files:"<< endl;
