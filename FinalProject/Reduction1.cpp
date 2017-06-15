@@ -55,6 +55,9 @@ Reduction1::~Reduction1() {
 	// TODO Auto-generated destructor stub
 }
 
+void Reduction1::check (std::vector< std::vector <int> >& filesblocks , std::vector <int> &deletedBlocks , std::vector <int> &deletedFiles){
+
+}
 /* This function convert one DNF clause into CNF form by adding extra variable as
  *  the subclause number */
 void Reduction1::dnf2cnf (vector< vector <bool> >& dnf){
