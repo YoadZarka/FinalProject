@@ -32,6 +32,25 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	//print();              //need to delete in the end
 }
 
+Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime, char* elpSolverTime) {
+	this->inputfile = new File (inputPath,1);
+	this->numOfLiterals = (int)(log2((double)(inputfile->numOfBlocks+inputfile->numOfFiles))+1);
+	if (this->numOfLiterals>63){
+		cout << "There are too many litterals";
+		exit(1);}
+	liteParser();
+	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
+		cout << "The k or k' input is too big";
+		exit(1);}
+	this->outputfile = new File (outputPath,2);
+	decodedOutput(delFiles,delBlocks);
+	writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks);
+	cout << "all done!"<<endl;
+	this->inputfile->~File();
+	this->outputfile->~File();
+	//print();              //need to delete in the end
+}
+
 Reduction1::~Reduction1() {
 	// TODO Auto-generated destructor stub
 }
@@ -424,7 +443,8 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	}
 
 void Reduction1::liteParser(){
-	this->blocksSize (this->inputfile->numOfBlocks,0);
+	for (int h=0; h<this->inputfile->numOfBlocks ; h++)
+	this->blocksSize.push_back(0);
 	string line;
 	line=this->inputfile->getLine();
 	while (line != "***end***"){
@@ -477,6 +497,7 @@ void Reduction1::liteParser(){
 	}
 }
 
+/* convert a binary number to its decimal representation */
 int Reduction1::fromBin(long n){
     long factor = 1;
     long total = 0;
@@ -493,8 +514,6 @@ int Reduction1::fromBin(long n){
 
 string Reduction1::decodedOutput (int delFiles, int delBlocks){
 	string line;
-	vector <int> deletedBlocks;
-	vector <int> deletedFiles;
 	line=this->outputfile->getLine();
 	if (line=="UNSAT")
 		return "UNSAT";
@@ -517,7 +536,7 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 			int file_bit;
 			ss >> file_bit;
 			int file_id = fromBin(file_bit);
-			deletedFiles.push_back(this->files[file_id]);
+			this->remainFiles.push_back(this->files[file_id-this->inputfile->numOfBlocks-1]);
 		}
 		for (int i=0 ; i<delBlocks ; i++){
 			stringstream ss;
@@ -536,9 +555,33 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 			int block_bit;
 			ss >> block_bit;
 			int block_id = fromBin(block_bit);
-			deletedBlocks.push_back(block_id);
+			this->deletedBlocks.push_back(block_id);
 		}
+		return "SAT";
 	}
+	return "Damaged output file";
+}
+
+void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks){
+	string strSize = "            ";
+	string ePT(elpParseTime);
+	string eST(elpSolverTime);
+	ePT.resize(4);
+	eST.resize(4);
+	string Dfiles=to_string(delFiles);
+	string Dblocks=to_string(delBlocks);
+	unsigned sz = strSize.size();
+	while (ePT.size()!= sz)  ePT.insert(0," ");
+	while (eST.size()!=sz)  eST.insert(0," ");
+	while (Dfiles.size()!=sz)  Dfiles.insert(0," ");
+	while (Dblocks.size()!=sz)  Dblocks.insert(0," ");
+	cout << "============================[ Problem Statistics ]============================="<<endl;
+	cout << "|                                                                             |"<<endl;
+	cout << "|  Number of Files for Deletion:  "<<Dfiles<< "                                |"<<endl;
+	cout << "|  Number of Blocks for Deletion: "<<Dblocks<<"                                |"<<endl;
+	cout << "|  Parse time:                    "<<ePT<<    " s                              |"<<endl;
+	cout << "|  Solver time:	                  "<<eST<<    " s                              |"<<endl;
+
 }
 
 //	/* writing the cnf files difference clause to the cnf solver input file*/

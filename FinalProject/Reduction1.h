@@ -19,7 +19,7 @@
 class Reduction1 {
 public:
 	Reduction1(char* path, int delFiles, int delBlocks);
-	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks);
+	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime);
 	virtual ~Reduction1();
 	void parser();
 	void convert2cnf();
@@ -32,6 +32,7 @@ public:
 	void liteParser();
 	int fromBin(long n);
 	std::string decodedOutput (int delFiles, int delBlocks);
+	void writeOutputSTDout (char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
@@ -41,7 +42,11 @@ public:
 	std::vector< std::vector <bool> > DNFDiff;		//store one dnf difference check clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
 	std::vector< std::vector <bool> > tempCnf;		//using in the cnf convert function
+	std::vector <int> deletedBlocks;  	 //contain all the blocks id for deletion
+	std::vector <int> remainFiles;		 //contain all the files id for remaining
 	std::vector<int> blocksSize;
+	std::string numOfVar;
+	std::string numOfClause;
 	int TotalblocksSize=0;							//save the total blocks size (bytes) in the output parsing
 	int numOfLiterals=0;
 	int totalLiterals=0;
