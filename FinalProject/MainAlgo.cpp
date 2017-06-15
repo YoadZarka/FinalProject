@@ -49,7 +49,7 @@ int main(int argc, char *argv[]){
 		string str1 = argv[6];
 		char *output = &str1[0u];
 		if (red==1)
-			Reduction1 r (input,output,delfile,delblock,op,"0.754568","5.8767");
+			Reduction1 r (input,output,delfile,delblock,op,"0.754568","5.8767",356,7657);
 		if (red==2)
 			//Reduction2 r (input,output,delfile,delblock,op);
 		return 1;

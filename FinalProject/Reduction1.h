@@ -19,7 +19,7 @@
 class Reduction1 {
 public:
 	Reduction1(char* path, int delFiles, int delBlocks);
-	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime);
+	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime,int numClas,int numVars);
 	virtual ~Reduction1();
 	void parser();
 	void convert2cnf();
@@ -32,7 +32,7 @@ public:
 	void liteParser();
 	int fromBin(long n);
 	std::string decodedOutput (int delFiles, int delBlocks);
-	void writeOutputSTDout (char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks);
+	void writeOutputSTDout (char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars);
 	std::vector<bool> id2dnf (int id);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause

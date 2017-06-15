@@ -8,6 +8,7 @@
 #include "Reduction1.h"
 #include <sstream>
 #include <math.h>
+#include <tgmath.h>
 #include <string>
 #include <bitset>
 
@@ -32,7 +33,7 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	//print();              //need to delete in the end
 }
 
-Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime, char* elpSolverTime) {
+Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime, char* elpSolverTime,int numClas,int numVars) {
 	this->inputfile = new File (inputPath,1);
 	this->numOfLiterals = (int)(log2((double)(inputfile->numOfBlocks+inputfile->numOfFiles))+1);
 	if (this->numOfLiterals>63){
@@ -44,7 +45,7 @@ Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delB
 		exit(1);}
 	this->outputfile = new File (outputPath,2);
 	decodedOutput(delFiles,delBlocks);
-	writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks);
+	writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars);
 	cout << "all done!"<<endl;
 	this->inputfile->~File();
 	this->outputfile->~File();
@@ -54,7 +55,6 @@ Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delB
 Reduction1::~Reduction1() {
 	// TODO Auto-generated destructor stub
 }
-
 
 /* This function convert one DNF clause into CNF form by adding extra variable as
  *  the subclause number */
@@ -563,26 +563,41 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 	return "Damaged output file";
 }
 
-void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks){
+void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars){
 	string strSize = "            ";
 	string ePT(elpParseTime);
 	string eST(elpSolverTime);
 	ePT.resize(4);
 	eST.resize(4);
-	string Dfiles=to_string(delFiles);
-	string Dblocks=to_string(delBlocks);
+	string Dfiles =to_string(delFiles);
+	string Dblocks =to_string(delBlocks);
+	string NClas = to_string(numClas);
+	string NVars = to_string(numVars);
+	string NBlocks = to_string(this->inputfile->numOfBlocks);
+	string origSize = to_string(this->TotalblocksSize/(pow(2,30)));
 	unsigned sz = strSize.size();
 	while (ePT.size()!= sz)  ePT.insert(0," ");
 	while (eST.size()!=sz)  eST.insert(0," ");
 	while (Dfiles.size()!=sz)  Dfiles.insert(0," ");
 	while (Dblocks.size()!=sz)  Dblocks.insert(0," ");
+	while (NClas.size()!=sz)  NClas.insert(0," ");
+	while (NVars.size()!=sz)  NVars.insert(0," ");
+	while (NBlocks.size()!=sz)  NBlocks.insert(0," ");
+	while (origSize.size()!=sz)  origSize.insert(0," ");
 	cout << "============================[ Problem Statistics ]============================="<<endl;
 	cout << "|                                                                             |"<<endl;
 	cout << "|  Number of Files for Deletion:  "<<Dfiles<< "                                |"<<endl;
 	cout << "|  Number of Blocks for Deletion: "<<Dblocks<<"                                |"<<endl;
+	cout << "|  Original number of blocks:     "<<NBlocks<<"                                |"<<endl;
+	cout << "|  Number of variables:           "<<NVars<<"                                |"<<endl;
+	cout << "|  Number of clauses:             "<<NClas<<"                                |"<<endl;
 	cout << "|  Parse time:                    "<<ePT<<    " s                              |"<<endl;
 	cout << "|  Solver time:	                  "<<eST<<    " s                              |"<<endl;
-
+	cout << "|                                                                             |"<<endl;
+	cout << "=============================[ Eliminated files ]=============================="<<endl;
+	cout << "| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |"<<endl;
+	cout << "|   "<< origSize <<"   |  "<< origSize <<" GB |    "<<  origSize <<"     | "<< origSize <<" GB |"<<endl;
+	cout << "==============================================================================="<<endl;
 }
 
 //	/* writing the cnf files difference clause to the cnf solver input file*/
