@@ -10,8 +10,10 @@ using namespace std;
 
 File::File(char* path, int reduce) {
 	this->myfile.open(path,ios::in);
-	if (!this->myfile.is_open())
+	if (!this->myfile.is_open()){
 		cout << "Unable to open file"<<endl;
+		exit(1);
+	}
 	readNumFilesBlocks();
 }
 
@@ -19,8 +21,10 @@ File::File(char* path){
 	this->myfile.open(path, std::ofstream::out | std::ofstream::trunc);
 	this->myfile.close();
 	this->myfile.open(path,ios::out);
-		if (!this->myfile.is_open())
+		if (!this->myfile.is_open()){
 			cout << "Unable to open file"<<endl;
+			exit(1);
+		}
 		this->numOfBlocks=0;
 		this->numOfFiles=0;
 }

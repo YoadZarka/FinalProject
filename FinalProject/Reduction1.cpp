@@ -11,6 +11,7 @@
 #include <tgmath.h>
 #include <string>
 #include <bitset>
+#include <algorithm>
 
 using namespace std;
 
@@ -486,12 +487,54 @@ void Reduction1::liteParser(){
 			}
 			line=this->inputfile->getLine();
 		}
-		else
-			line=this->inputfile->getLine();
+		else{
+			string tmpStr = line.substr(0,7);
+			if ( tmpStr == "#Input "){
+				size_t pos=line.find(":")+1;
+				line = line.substr(pos);
+				istringstream stream(line);
+				vector <int> filesystems;
+				while (line.find(',')!=-1)
+				{
+					string token;
+					filesystems.push_back(stoi(token=line.substr(0,line.find(','))));
+					line=line.substr(line.find(',')+1);
+				}
+				this->numOfFSystems=filesystems.size();
+				this->firstFS=filesystems[0];
+				this->lastFS=filesystems[filesystems.size()-1];
+			}
+			if (tmpStr ==("#Target")){
+				size_t pos=line.find(":")+1;
+				this->HTarget = line.substr(pos);
+			}
 
-		if (line.at(0) == 'B'){
-			break;
+			if (line.at(0) == 'B'){
+				for (int i=0; i<4 ; i++){
+					line=line.substr(line.find(",")+1);
+				}
+				size_t pos=line.find(",");
+				string num = line.substr(0,pos);
+				int fn;
+				stringstream(num) >> fn;
+				vector <int> CFiles;
+				for (int i=0 ; i<fn ;i++){
+					pos=line.find(",");
+					line=line.substr(pos+1);
+					pos=line.find(",");
+					num=line.substr(0,pos);
+					int f;
+					stringstream(num) >> f;  //get the file id number to f
+					CFiles.push_back(f);
+				}
+				this->BTF.push_back(CFiles);
+				CFiles.clear();
+			}
+			line=this->inputfile->getLine();
 		}
+
+		if (line.at(0) == 'D')
+			break;
 	}
 	for (int j=0 ; j<this->blocksSize.size() ; j++){
 		this->TotalblocksSize = this->TotalblocksSize + this->blocksSize[j];
@@ -511,6 +554,18 @@ int Reduction1::fromBin(long n){
     }
 
     return (int)total;
+}
+
+void Reduction1::findBlocksInAir (){
+	for(int i=0; i<this->BTF.size(); i++){
+		int cnt = this->BTF[i].size();
+		for(int j=0; j<this->BTF[i].size(); j++){
+			if (find(this->deletedFiles.begin(), this->deletedFiles.end(),this->BTF[i][j]) != this->deletedFiles.end())
+				cnt--;
+		}
+		if(cnt == 0 && !(find(this->deletedBlocks.begin(), this->deletedBlocks.end(),i) != this->deletedBlocks.end()))
+			this->blocksInAir.push_back(i);
+	}
 }
 
 string Reduction1::decodedOutput (int delFiles, int delBlocks){
@@ -558,6 +613,15 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 			int block_id = fromBin(block_bit);
 			this->deletedBlocks.push_back(block_id);
 		}
+		for (int i=0 ; i<this->deletedBlocks.size() ; i++){
+			this->TotalDelBlockSize = this->TotalDelBlockSize + this->blocksSize[this->deletedBlocks[i]];
+		}
+		for (int i=0 ; i<this->files.size() ; i++){
+			if (!(find(this->remainFiles.begin(), this->remainFiles.end(),this->files[i]) != this->remainFiles.end())){
+				this->deletedFiles.push_back(this->files[i]);
+			}
+		}
+		findBlocksInAir ();
 		return "SAT";
 	}
 	return "Damaged output file";
@@ -575,6 +639,9 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	string NVars = to_string(numVars);
 	string NBlocks = to_string(this->inputfile->numOfBlocks);
 	string origSize = to_string(this->TotalblocksSize/(pow(2,30)));
+	string totalDelFiles = to_string(this->files.size()-this->remainFiles.size());
+	string origNumFiles = to_string(this->files.size());
+	string DelSize = to_string(this->TotalDelBlockSize/(pow(2,30)));
 	unsigned sz = strSize.size();
 	while (ePT.size()!= sz)  ePT.insert(0," ");
 	while (eST.size()!=sz)  eST.insert(0," ");
@@ -584,6 +651,9 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	while (NVars.size()!=sz)  NVars.insert(0," ");
 	while (NBlocks.size()!=sz)  NBlocks.insert(0," ");
 	while (origSize.size()!=sz)  origSize.insert(0," ");
+	while (totalDelFiles.size()!=sz)  totalDelFiles.insert(0," ");
+	while (origNumFiles.size()!=sz)  origNumFiles.insert(0," ");
+	while (DelSize.size()!=sz)  DelSize.insert(0," ");
 	cout << "============================[ Problem Statistics ]============================="<<endl;
 	cout << "|                                                                             |"<<endl;
 	cout << "|  Number of Files for Deletion:  "<<Dfiles<< "                                |"<<endl;
@@ -596,8 +666,9 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	cout << "|                                                                             |"<<endl;
 	cout << "=============================[ Eliminated files ]=============================="<<endl;
 	cout << "| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |"<<endl;
-	cout << "|   "<< origSize <<"   |  "<< origSize <<" GB |    "<<  origSize <<"     | "<< origSize <<" GB |"<<endl;
+	cout << "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |"<<endl;
 	cout << "==============================================================================="<<endl;
+
 }
 
 //	/* writing the cnf files difference clause to the cnf solver input file*/

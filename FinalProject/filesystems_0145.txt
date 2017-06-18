@@ -1,5 +1,5 @@
 #Output type: heuristic
-#Input files: 0145, 
+#Input files: 0145,0146,0147, 
 #Original Number of blocks: 13
 #RAM memory usage: 0.0278053
 #Random seed: 4006503106

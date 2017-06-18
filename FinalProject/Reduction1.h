@@ -34,6 +34,7 @@ public:
 	std::string decodedOutput (int delFiles, int delBlocks);
 	void writeOutputSTDout (char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars);
 	std::vector<bool> id2dnf (int id);
+	void findBlocksInAir ();
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
 	std::vector< std::vector <bool> > DNFEdges;		//store one dnf edges clause
@@ -42,17 +43,25 @@ public:
 	std::vector< std::vector <bool> > DNFDiff;		//store one dnf difference check clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
 	std::vector< std::vector <bool> > tempCnf;		//using in the cnf convert function
-	std::vector <int> deletedBlocks;  	 //contain all the blocks id for deletion
-	std::vector <int> remainFiles;		 //contain all the files id for remaining
-	std::vector<int> blocksSize;
+	std::vector <int> deletedBlocks;  	  //contain all the blocks id for deletion
+	std::vector <int> remainFiles;		  //contain all the files id for remaining
+	std::vector <int> deletedFiles;		  //contain all the files id for deletion
+	std::vector <int> blocksInAir;		  //contain all the blocks id that deleted and not mark by the solver
+	std::vector <int> blocksSize;
+	std::vector < std::vector <int> > BTF;   //blocks to files edges, the index of the outer vector is the block ID
 	std::string numOfVar;
 	std::string numOfClause;
-	int TotalblocksSize=0;							//save the total blocks size (bytes) in the output parsing
+	std::string HTarget;
+	long TotalblocksSize=0;							//save the total blocks size (bytes) in the output parsing
+	long TotalDelBlockSize=0;
 	int numOfLiterals=0;
 	int totalLiterals=0;
 	int firstFile=0;
 	int firstBlock=0;
 	int firstZvar=0;
+	int numOfFSystems=0;
+	int firstFS =0;
+	int lastFS =0;
 	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;
