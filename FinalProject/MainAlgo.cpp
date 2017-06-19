@@ -21,7 +21,7 @@ MainAlgo::~MainAlgo() {
 }
 
 /** Argument Guide
-* Arg number    [       1       ,            2        ,            3          ,         4       ,    5    (Continues in two rows)
+ * Arg number    [       1       ,            2        ,            3          ,         4       ,    5    (Continues in two rows)
  * FinalProject [input file path, k files for deletion, k' blocks for deletion, Reduction number, Op code (see below)
  * , output file path, elapsed time parser, elapsed time solver, number of clause, number of variables]
  * ,       6         ,         7          ,         8          ,        9        ,         10         ]
@@ -53,39 +53,38 @@ int main(int argc, char *argv[]){
 		if (red==1)
 			Reduction1 r (input,delfile,delblock);
 		else
-		if (red==2)
-			Reduction2 r (input,delfile,delblock);
-		else
-			cout << "The 'Reduction Number' argument is not correct!"<<endl;
+			if (red==2)
+				Reduction2 r (input,delfile,delblock);
+			else
+				cout << "The 'Reduction Number' argument is not correct!"<<endl;
 		return 1;
 	}
 	else
-	if (op==1 || op==2)  //decode output file
-	{
-		if (argc < 9){
-			cout<<"Wrong number of arguments passed"<<endl;
-			return 0;
+		if (op==1 || op==2)  //decode output file
+		{
+			if (argc < 9){
+				cout<<"Wrong number of arguments passed"<<endl;
+				return 0;
+			}
+			string str1 = argv[6];				// arg 6 is the solver result output file path
+			char *output = &str1[0u];
+			string str3 = argv[7];				// arg 7 is elapsed runtime of parse the input txt file into cnf file
+			char *ETparser = &str3[0u];
+			string str4 = argv[8];				// arg 8 is elapsed runtime of solver
+			char* ETsolver = &str4[0u];
+			str2 = argv[9];						// arg 9 is number of clauses in the solver cnf file
+			int32_t numOfClauses = stoi(str2,&sz);
+			str2 = argv[10];						// arg 10 is number of variables in the solver cnf file
+			int32_t numOfVars = stoi(str2,&sz);
+			if (red==1)
+				Reduction1 r (input,output,delfile,delblock,op,ETparser,ETsolver,numOfClauses,numOfVars);
+			else
+				if (red==2)
+					Reduction2 r (input,output,delfile,delblock,op,ETparser,ETsolver,numOfClauses,numOfVars);
+				else
+					cout << "The 'Reduction Number' argument is not correct!"<<endl;
+			return 1;
 		}
-		string str1 = argv[6];				// arg 6 is the solver result output file path
-		char *output = &str1[0u];
-		string str3 = argv[7];				// arg 7 is elapsed runtime of parse the input txt file into cnf file
-		char *ETparser = &str3[0u];
-		string str4 = argv[8];				// arg 8 is elapsed runtime of solver
-		char* ETsolver = &str4[0u];
-		str2 = argv[9];						// arg 9 is number of clauses in the solver cnf file
-		int32_t numOfClauses = stoi(str2,&sz);
-		str2 = argv[10];						// arg 10 is number of variables in the solver cnf file
-		int32_t numOfVars = stoi(str2,&sz);
-		if (red==1)
-			Reduction1 r (input,output,delfile,delblock,op,ETparser,ETsolver,numOfClauses,numOfVars);
 		else
-		if (red==2)
-			red=2;
-			//Reduction2 r (input,output,delfile,delblock,op);
-		else
-			cout << "The 'Reduction Number' argument is not correct!"<<endl;
-		return 1;
-	}
-	else
-		cout << "'Op code' argument is not exists"<<endl;
+			cout << "'Op code' argument is not exists"<<endl;
 }

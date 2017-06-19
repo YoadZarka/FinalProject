@@ -27,7 +27,7 @@ public:
 	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
 	//void encodeCNFDiff ();
 	void encodeDNFDiff ();
-	int summtion (int delFiles, int delBlocks);
+	int summtion(int delFiles, int delBlocks);
 	void writeCNF(int delFiles, int delBlocks);
 	void liteParser();
 	int fromBin(long n);

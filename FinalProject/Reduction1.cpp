@@ -31,7 +31,6 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	//encodeCNFDiff ();
 	writeCNF(delFiles, delBlocks);
 	cout << "all done!"<<endl;
-	//print();              //need to delete in the end
 }
 
 Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime, char* elpSolverTime,int numClas,int numVars) {
@@ -47,10 +46,9 @@ Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delB
 	this->outputfile = new File (outputPath,2);
 	decodedOutput(delFiles,delBlocks);
 	writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars);
-	cout << "all done!"<<endl;
 	this->inputfile->~File();
 	this->outputfile->~File();
-	//print();              //need to delete in the end
+	cout << "all done!"<<endl;
 }
 
 Reduction1::~Reduction1() {
@@ -178,7 +176,7 @@ void Reduction1::encodeDNFDiff (){
 	xordnf1.push_back(false);
 	vector<bool> xordnf2;
 	xordnf2.push_back(false);
-    xordnf2.push_back(true);
+	xordnf2.push_back(true);
 	for (int i=0 ; i<this->numOfLiterals ; i++){
 		this->DNFDiff.push_back(xordnf1);
 		this->DNFDiff.push_back(xordnf2);
@@ -201,7 +199,7 @@ void Reduction1::convert2cnf(){
 		this->tempCnf[i].clear();
 	}
 	this->tempCnf.clear();
-		/*						*/
+	/*						*/
 	dnf2cnf(this->DNFDiff);
 	this->CNFDiff=this->tempCnf;
 
@@ -232,9 +230,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	this->firstFile =1;
 	this->firstBlock =(numOfLiterals*(this->inputfile->numOfFiles-delFiles))+1;
 	this->firstZvar =(this->numOfLiterals*((this->inputfile->numOfFiles-delFiles)+delBlocks))+1;
-	// need to fix
 	uint numOfClauses = (this->CNFFile.size()*(this->inputfile->numOfFiles-delFiles)) + (this->CNFBlocks.size()*delBlocks) + (this->DNFEdges.size()*((this->inputfile->numOfFiles-delFiles)*delBlocks) + ((1+4*this->numOfLiterals)*numOfDiff));
-	//
 	string outputName = "SAT_R1_input.cnf";
 	char *cstr = &outputName[0u];
 	this->outputfile = new File (cstr);
@@ -298,25 +294,25 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 
 		int n = this->CNFBlocks.size();
 		for (int j=1 ; j<n ; j++){
-				if (this->CNFBlocks[j][0]==true){
-					ss << this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals)<<" ";
-				}
-				else{
-					ss << -(this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals))<<" ";
-				}
-				if (this->CNFBlocks[j][1]==true){
-					ss << this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
-				}
-				else{
-					ss << -(this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals))<<" ";
-				}
-				ss << "0";
-				str=ss.str();
-				this->outputfile->writeLine(str);
-				ss.str("");
-				str="";
+			if (this->CNFBlocks[j][0]==true){
+				ss << this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals)<<" ";
 			}
+			else{
+				ss << -(this->firstZvar+(i*zBlnum)+((j-1)/this->numOfLiterals))<<" ";
+			}
+			if (this->CNFBlocks[j][1]==true){
+				ss << this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals)<<" ";
+			}
+			else{
+				ss << -(this->firstBlock+(i*this->numOfLiterals)+((j-1)%this->numOfLiterals))<<" ";
+			}
+			ss << "0";
+			str=ss.str();
+			this->outputfile->writeLine(str);
+			ss.str("");
+			str="";
 		}
+	}
 
 	/* writing the cnf edges clause to the cnf solver input file*/
 	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
@@ -352,9 +348,9 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 		for (int j=i+1 ; j<(this->inputfile->numOfFiles-delFiles) ; j++){	// j=i+1 to m-k
 			//write the z clause
 			for (uint z=0 ; z<this->CNFDiff[0].size() ; z++){
-							ss << (this->firstZvar + numOfZ) << " ";
-							numOfZ++;
-						}
+				ss << (this->firstZvar + numOfZ) << " ";
+				numOfZ++;
+			}
 			ss << "0";
 			str=ss.str();
 			this->outputfile->writeLine(str);
@@ -393,60 +389,60 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	}
 
 	/* writing the cnf blocks difference clause to the cnf solver input file*/
-		this->firstZvar =this->firstZvar + numOfZ;
-		numOfZ=0;
-		for (int i=0 ; i<(delBlocks) ; i++){    		 // i=0 to k'
-			stringstream ss;
-			string str;
-			for (int j=i+1 ; j<(delBlocks) ; j++){	// j=i+1 to k'
-				//write the z clause
-				for (uint z=0 ; z<this->CNFDiff[0].size() ; z++){
-								ss << (this->firstZvar + numOfZ) << " ";
-								numOfZ++;
-							}
+	this->firstZvar =this->firstZvar + numOfZ;
+	numOfZ=0;
+	for (int i=0 ; i<(delBlocks) ; i++){    		 // i=0 to k'
+		stringstream ss;
+		string str;
+		for (int j=i+1 ; j<(delBlocks) ; j++){	// j=i+1 to k'
+			//write the z clause
+			for (uint z=0 ; z<this->CNFDiff[0].size() ; z++){
+				ss << (this->firstZvar + numOfZ) << " ";
+				numOfZ++;
+			}
+			ss << "0";
+			str=ss.str();
+			this->outputfile->writeLine(str);
+			ss.str("");
+			str="";
+			for (int s=1 ; s<(this->numOfLiterals*2)+1 ; s++){
+				int temp=numOfZ -(this->numOfLiterals*2)+s-1;
+				if (this->CNFDiff[(s-1)*2+1][1]==true){
+					ss << -(this->firstZvar + temp) << " ";
+					ss << this->firstBlock + (i*this->numOfLiterals)+((s-1)/2)<<" ";  //literal a
+				}
+				else{
+					ss << -(this->firstZvar + temp) << " ";
+					ss << -(this->firstBlock + (i*this->numOfLiterals)+((s-1)/2))<<" ";  //literal ~a
+				}
 				ss << "0";
 				str=ss.str();
 				this->outputfile->writeLine(str);
 				ss.str("");
 				str="";
-				for (int s=1 ; s<(this->numOfLiterals*2)+1 ; s++){
-					int temp=numOfZ -(this->numOfLiterals*2)+s-1;
-					if (this->CNFDiff[(s-1)*2+1][1]==true){
-						ss << -(this->firstZvar + temp) << " ";
-						ss << this->firstBlock + (i*this->numOfLiterals)+((s-1)/2)<<" ";  //literal a
-					}
-					else{
-						ss << -(this->firstZvar + temp) << " ";
-						ss << -(this->firstBlock + (i*this->numOfLiterals)+((s-1)/2))<<" ";  //literal ~a
-					}
-					ss << "0";
-					str=ss.str();
-					this->outputfile->writeLine(str);
-					ss.str("");
-					str="";
-					if (this->CNFDiff[(s-1)*2+2][1]==true){
-						ss << -(this->firstZvar + temp) << " ";
-						ss << this->firstBlock + (j*this->numOfLiterals)+((s-1)/2)<<" ";  //literal b
-					}
-					else{
-						ss << -(this->firstZvar + temp) << " ";
-						ss << -(this->firstBlock + (j*this->numOfLiterals)+((s-1)/2))<<" ";  //literal b
-					}
-					ss << "0";
-					str=ss.str();
-					this->outputfile->writeLine(str);
-					ss.str("");
-					str="";
+				if (this->CNFDiff[(s-1)*2+2][1]==true){
+					ss << -(this->firstZvar + temp) << " ";
+					ss << this->firstBlock + (j*this->numOfLiterals)+((s-1)/2)<<" ";  //literal b
 				}
+				else{
+					ss << -(this->firstZvar + temp) << " ";
+					ss << -(this->firstBlock + (j*this->numOfLiterals)+((s-1)/2))<<" ";  //literal b
+				}
+				ss << "0";
+				str=ss.str();
+				this->outputfile->writeLine(str);
+				ss.str("");
+				str="";
 			}
 		}
-
-		this->outputfile->~File();
 	}
+
+	this->outputfile->~File();
+}
 
 void Reduction1::liteParser(){
 	for (int h=0; h<this->inputfile->numOfBlocks ; h++)
-	this->blocksSize.push_back(0);
+		this->blocksSize.push_back(0);
 	string line;
 	line=this->inputfile->getLine();
 	while (line != "***end***"){
@@ -543,17 +539,17 @@ void Reduction1::liteParser(){
 
 /* convert a binary number to its decimal representation */
 int Reduction1::fromBin(long n){
-    long factor = 1;
-    long total = 0;
+	long factor = 1;
+	long total = 0;
 
-    while (n != 0)
-    {
-        total += (n%10) * factor;
-        n /= 10;
-        factor *= 2;
-    }
+	while (n != 0)
+	{
+		total += (n%10) * factor;
+		n /= 10;
+		factor *= 2;
+	}
 
-    return (int)total;
+	return (int)total;
 }
 
 void Reduction1::findBlocksInAir (){
@@ -656,6 +652,8 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	while (DelSize.size()!=sz)  DelSize.insert(0," ");
 	cout << "============================[ Problem Statistics ]============================="<<endl;
 	cout << "|                                                                             |"<<endl;
+	cout << "|                          [ Reduction 1 selected ]                           |"<<endl;
+	cout << "|                                                                             |"<<endl;
 	cout << "|  Number of Files for Deletion:  "<<Dfiles<< "                                |"<<endl;
 	cout << "|  Number of Blocks for Deletion: "<<Dblocks<<"                                |"<<endl;
 	cout << "|  Original number of blocks:     "<<NBlocks<<"                                |"<<endl;
@@ -668,7 +666,50 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	cout << "| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |"<<endl;
 	cout << "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |"<<endl;
 	cout << "==============================================================================="<<endl;
-
+	string solOut = "Solution_Reduction1_heuristic_targetBlocks_"+this->HTarget.substr(1)+"_filesystems_"+to_string(this->firstFS)+"_to_"+to_string(this->lastFS)+"_output";
+	char *cstr = &solOut[0u];
+	File* solutionFile = new File (cstr);
+	solutionFile->writeLine("============================[ Problem Statistics ]=============================");
+	solutionFile->writeLine("|                                                                             |");
+	solutionFile->writeLine("|                          [ Reduction 1 selected ]                           |");
+	solutionFile->writeLine("|                                                                             |");
+	stringstream ss1;
+	ss1 << 				   "|  Number of Files for Deletion:  "<<Dfiles<< "                                |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Number of Blocks for Deletion: "<<Dblocks<<"                                |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Original number of blocks:     "<<NBlocks<<"                                |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Number of variables:           "<<NVars<<"                                |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Number of clauses:             "<<NClas<<"                                |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Parse time:                    "<<ePT<<    " s                              |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	ss1 << 				   "|  Solver time:	                  "<<eST<<    " s                              |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	solutionFile->writeLine("|                                                                             |");
+	solutionFile->writeLine("=============================[ Eliminated files ]==============================");
+	solutionFile->writeLine("| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |");
+	ss1 <<   "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	solutionFile->writeLine("===============================================================================");
+	solutionFile->writeLine("                                                                               ");
+	solutionFile->writeLine("============================[ Deleted files ID's ]=============================");
+	for (int i=0 ; i<this->deletedFiles.size() ; i++){
+		ss1 <<   this->deletedFiles[i];
+		solutionFile->writeLine(ss1.str());
+		ss1.str("");
+	}
+	solutionFile->~File();
 }
 
 //	/* writing the cnf files difference clause to the cnf solver input file*/
@@ -734,53 +775,53 @@ void Reduction1::print(){
 		cout<<endl;
 	}
 	cout << "CNF files:"<< endl;
-		for (uint i=0 ; i<this->CNFFile.size() ; i++){
-			for (uint j=0 ; j<this->CNFFile[i].size() ; j++){
-				if (this->CNFFile[i][j]==true)
-					cout << 1;
-				else
-					cout << 0;
-			}
-			cout<<endl;
+	for (uint i=0 ; i<this->CNFFile.size() ; i++){
+		for (uint j=0 ; j<this->CNFFile[i].size() ; j++){
+			if (this->CNFFile[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
 		}
+		cout<<endl;
+	}
 	cout << "DNF Blocks:"<< endl;
 	for (uint i=0 ; i<this->DNFBlocks.size() ; i++){
-			for (uint j=0 ; j<this->DNFBlocks[i].size() ; j++){
-				if (this->DNFBlocks[i][j]==true)
-					cout << 1;
-				else
-					cout << 0;
-			}
-			cout<<endl;
+		for (uint j=0 ; j<this->DNFBlocks[i].size() ; j++){
+			if (this->DNFBlocks[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
+		}
+		cout<<endl;
 	}
 	cout << "CNF Blocks:"<< endl;
-		for (uint i=0 ; i<this->CNFBlocks.size() ; i++){
-				for (uint j=0 ; j<this->CNFBlocks[i].size() ; j++){
-					if (this->CNFBlocks[i][j]==true)
-						cout << 1;
-					else
-						cout << 0;
-				}
-				cout<<endl;
+	for (uint i=0 ; i<this->CNFBlocks.size() ; i++){
+		for (uint j=0 ; j<this->CNFBlocks[i].size() ; j++){
+			if (this->CNFBlocks[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
 		}
+		cout<<endl;
+	}
 	cout << "CNF Edges:"<< endl;
 	for (uint i=0 ; i<this->DNFEdges.size() ; i++){
-				for (uint j=0 ; j<this->DNFEdges[i].size() ; j++){
-					if (this->DNFEdges[i][j]==true)
-						cout << 1;
-					else
-						cout << 0;
-				}
-				cout<<endl;
+		for (uint j=0 ; j<this->DNFEdges[i].size() ; j++){
+			if (this->DNFEdges[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
 		}
+		cout<<endl;
+	}
 	cout << "CNF Diff:"<< endl;
-		for (uint i=0 ; i<this->CNFDiff.size() ; i++){
-					for (uint j=0 ; j<this->CNFDiff[i].size() ; j++){
-						if (this->CNFDiff[i][j]==true)
-							cout << 1;
-						else
-							cout << 0;
-					}
-					cout<<endl;
-			}
+	for (uint i=0 ; i<this->CNFDiff.size() ; i++){
+		for (uint j=0 ; j<this->CNFDiff[i].size() ; j++){
+			if (this->CNFDiff[i][j]==true)
+				cout << 1;
+			else
+				cout << 0;
+		}
+		cout<<endl;
+	}
 }
