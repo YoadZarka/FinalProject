@@ -93,27 +93,27 @@ void Reduction2::parser(){
 }
 
 vector< vector< int32_t > > Reduction2::pb2cnf (vector< int32_t > literals, int k, int32_t firstAuxVar, string op){
-	PB2CNF pb2cnf;
-	vector< vector< int32_t > > formula;
-	if (op=="AtLeast")
-		this->firstFresh = pb2cnf.encodeAtLeastK(literals, k, formula, firstAuxVar) + 1;
-	if (op=="AtMost")
-		this->firstFresh = pb2cnf.encodeAtMostK(literals, k, formula, firstAuxVar) + 1;
-	return formula;
+	   PB2CNF pb2cnf;
+	   vector< vector< int32_t > > formula;
+	   if (op=="AtLeast")
+		   this->firstFresh = pb2cnf.encodeAtLeastK(literals, k, formula, firstAuxVar) + 1;
+	   if (op=="AtMost")
+		   this->firstFresh = pb2cnf.encodeAtMostK(literals, k, formula, firstAuxVar) + 1;
+	   return formula;
 }
 
 void Reduction2::writeVec (vector< vector< int32_t > > vec){
 	stringstream ss2;
 	string str2;
 	for (int32_t i=0 ; i<vec.size() ; i++){
-		for (int j=0 ; j<vec[i].size() ; j++){
-			ss2 << vec[i][j] <<" ";
-		}
-		ss2 << "0";
-		str2=ss2.str();
-		this->outputfile->writeLine(str2);
-		ss2.str("");
-		str2="";
+			for (int j=0 ; j<vec[i].size() ; j++){
+				ss2 << vec[i][j] <<" ";
+			}
+			ss2 << "0";
+			str2=ss2.str();
+			this->outputfile->writeLine(str2);
+			ss2.str("");
+			str2="";
 	}
 }
 
@@ -128,7 +128,7 @@ void Reduction2::writeCNF(int32_t delFiles, int32_t delBlocks){
 	this->BAtLeastCNF=pb2cnf(literals,delBlocks,this->firstFresh,"AtLeast");
 	literals.clear();
 	for (int32_t i=1 ; i<this->inputfile->numOfFiles+1 ; i++){
-		literals.push_back(i+this->inputfile->numOfBlocks);
+			literals.push_back(i+this->inputfile->numOfBlocks);
 	}
 	this->FAtMostCNF=pb2cnf(literals,delFiles,this->firstFresh,"AtMost");
 	int32_t numOfClauses = this->BAtLeastCNF.size()+this->FAtMostCNF.size()+this->MatCondCNF.size();
@@ -152,7 +152,7 @@ void Reduction2::writeCNF(int32_t delFiles, int32_t delBlocks){
 
 void Reduction2::liteParser(){
 	for (int h=0; h<this->inputfile->numOfBlocks ; h++)
-		this->blocksSize.push_back(0);
+	this->blocksSize.push_back(0);
 	string line;
 	line=this->inputfile->getLine();
 	while (line != "***end***"){
@@ -278,15 +278,15 @@ string Reduction2::decodedOutput (int delFiles, int delBlocks){
 		}
 		for (int i=0 ; i<this->inputfile->numOfFiles ; i++){
 			size_t pos=line.find(" ");
-			string temp_str=line.substr(0,pos);
-			pos++;
-			int file_id;
-			stringstream(temp_str) >> file_id;  //get the file id +1 number to f
-			if (file_id>0)
-				this->deletedFiles.push_back(file_id-1);
-			if (file_id<0)
-				this->remainFiles.push_back(file_id-1);
-			line = line.substr(pos);
+						string temp_str=line.substr(0,pos);
+						pos++;
+						int file_id;
+						stringstream(temp_str) >> file_id;  //get the file id +1 number to f
+						if (file_id>0)
+							this->deletedFiles.push_back(file_id-1);
+						if (file_id<0)
+							this->remainFiles.push_back(file_id-1);
+						line = line.substr(pos);
 		}
 		for (int i=0 ; i<this->deletedBlocks.size() ; i++){
 			this->TotalDelBlockSize = this->TotalDelBlockSize + this->blocksSize[this->deletedBlocks[i]];
