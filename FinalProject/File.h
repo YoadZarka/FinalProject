@@ -14,8 +14,8 @@
 
 class File {
 public:
-	int numOfFiles;
-	int numOfBlocks;
+	int numOfFiles=0;
+	int numOfBlocks=0;
 	std::fstream myfile;
 	File(char* path,int reduce);
 	File(char* path);

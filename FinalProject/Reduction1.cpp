@@ -17,38 +17,49 @@ using namespace std;
 
 Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	this->inputfile = new File (path,1);
+	if ((this->inputfile->numOfBlocks==0)||(this->inputfile->numOfFiles==0)){
+		cout << "The input file doesn't match";
+		exit(1);}
 	this->numOfLiterals = (int)(log2((double)(inputfile->numOfBlocks+inputfile->numOfFiles))+1);
 	if (this->numOfLiterals>63){
-		cout << "There are too many litterals";
+		cout << "Too many litterals, can't calculate";
+		exit(1);}
+	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
+		cout << "The k or k' input is bigger then the original input";
 		exit(1);}
 	parser();
-	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
-		cout << "The k or k' input is too big";
-		exit(1);}
 	this->inputfile->~File();
 	encodeDNFDiff ();
 	convert2cnf();
-	//encodeCNFDiff ();
+	//encodeCNFDiff (); 				exp version do not use
 	writeCNF(delFiles, delBlocks);
-	cout << "all done!"<<endl;
+	cout << "all done!";
 }
 
-Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime, char* elpSolverTime,int numClas,int numVars) {
+Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op, char* elpParseTime
+		, char* elpSolverTime,int numClas,int numVars,char* CNFSize, char* maxRAMSolver)
+{
 	this->inputfile = new File (inputPath,1);
+	if ((this->inputfile->numOfBlocks==0)||(this->inputfile->numOfFiles==0)){
+		cout << "The input file doesn't match";
+		exit(1);}
 	this->numOfLiterals = (int)(log2((double)(inputfile->numOfBlocks+inputfile->numOfFiles))+1);
 	if (this->numOfLiterals>63){
-		cout << "There are too many litterals";
+		cout << "Too many litterals, can't calculate";
+		exit(1);}
+	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
+		cout << "The k or k' input is bigger then the original input";
 		exit(1);}
 	liteParser();
-	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
-		cout << "The k or k' input is too big";
-		exit(1);}
 	this->outputfile = new File (outputPath,2);
-	decodedOutput(delFiles,delBlocks);
-	writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars);
+	this->solverOUTPUT=decodedOutput(delFiles,delBlocks);
+	if (op==1)
+		writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars, CNFSize, maxRAMSolver);
+	if (op==2)
+		writeOutputSaraiGala(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars, CNFSize, maxRAMSolver);
 	this->inputfile->~File();
 	this->outputfile->~File();
-	cout << "all done!"<<endl;
+	cout << "all done!";
 }
 
 Reduction1::~Reduction1() {
@@ -568,7 +579,7 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 	string line;
 	line=this->outputfile->getLine();
 	if (line=="UNSAT")
-		return "UNSAT";
+		return "UNSATISFIESABLE";
 	if (line=="SAT"){
 		line=this->outputfile->getLine();
 		for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){
@@ -609,21 +620,63 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 			int block_id = fromBin(block_bit);
 			this->deletedBlocks.push_back(block_id);
 		}
+		findBlocksInAir ();
 		for (int i=0 ; i<this->deletedBlocks.size() ; i++){
 			this->TotalDelBlockSize = this->TotalDelBlockSize + this->blocksSize[this->deletedBlocks[i]];
+		}
+		for (int i=0 ; i<this->blocksInAir.size() ; i++){
+			this->TotalDelBlockSize = this->TotalDelBlockSize + this->blocksSize[this->blocksInAir[i]];
 		}
 		for (int i=0 ; i<this->files.size() ; i++){
 			if (!(find(this->remainFiles.begin(), this->remainFiles.end(),this->files[i]) != this->remainFiles.end())){
 				this->deletedFiles.push_back(this->files[i]);
 			}
 		}
-		findBlocksInAir ();
-		return "SAT";
+		return "SATISFIESABLE";
 	}
-	return "Damaged output file";
+	if (line == "***end***")
+		return " INDETERMINATE ";
+	cout << "Damaged Solver output file";
+	exit (1);
 }
 
-void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars){
+void Reduction1::findOrigDelBlocks (){
+	int32_t BCnt=0;
+	string line;
+	line=this->inputfile->getLine();
+	while (line != "***end***"){
+		if (line.at(0) == 'M'){
+			size_t pos=line.find(",");
+			line = line.substr(pos+1);
+			pos=line.find(",");
+			string num = line.substr(0,pos);
+			int b;
+			stringstream(num) >> b;  //get the number of block ID
+			if (find(this->deletedBlocks.begin(), this->deletedBlocks.end(),b) != this->deletedBlocks.end()){
+				line = line.substr(pos+1);
+				pos=line.find(",");
+				num = line.substr(0,pos);
+				int numOfOrigBlocks;
+				stringstream(num) >> numOfOrigBlocks;
+				this->DelBlocksBySolver = this->DelBlocksBySolver + numOfOrigBlocks;
+			}
+			if (find(this->blocksInAir.begin(), this->blocksInAir.end(),b) != this->blocksInAir.end()){
+				line = line.substr(pos+1);
+				pos=line.find(",");
+				num = line.substr(0,pos);
+				int numOfOrigBlocks;
+				stringstream(num) >> numOfOrigBlocks;
+				this->DelBlocksInAir = this->DelBlocksInAir + numOfOrigBlocks;
+			}
+			line=this->inputfile->getLine();
+		}
+		else
+			line=this->inputfile->getLine();
+	}
+}
+
+void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas
+		,int numVars, char* CNFSize, char* maxRAMSolver){
 	string strSize = "            ";
 	string ePT(elpParseTime);
 	string eST(elpSolverTime);
@@ -638,6 +691,15 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	string totalDelFiles = to_string(this->files.size()-this->remainFiles.size());
 	string origNumFiles = to_string(this->files.size());
 	string DelSize = to_string(this->TotalDelBlockSize/(pow(2,30)));
+	string SolverRam (maxRAMSolver);
+	size_t pos = SolverRam.find('M');
+	SolverRam.insert(pos," ");
+	string cnfSize (CNFSize);
+	string::size_type sZ;
+	int CNFS = stoi(cnfSize,&sZ);
+	CNFS=CNFS/1000;
+	cnfSize = to_string(CNFS);
+
 	unsigned sz = strSize.size();
 	while (ePT.size()!= sz)  ePT.insert(0," ");
 	while (eST.size()!=sz)  eST.insert(0," ");
@@ -650,22 +712,36 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	while (totalDelFiles.size()!=sz)  totalDelFiles.insert(0," ");
 	while (origNumFiles.size()!=sz)  origNumFiles.insert(0," ");
 	while (DelSize.size()!=sz)  DelSize.insert(0," ");
-	cout << "============================[ Problem Statistics ]============================="<<endl;
-	cout << "|                                                                             |"<<endl;
-	cout << "|                          [ Reduction 1 selected ]                           |"<<endl;
-	cout << "|                                                                             |"<<endl;
-	cout << "|  Number of Files for Deletion:  "<<Dfiles<< "                                |"<<endl;
-	cout << "|  Number of Blocks for Deletion: "<<Dblocks<<"                                |"<<endl;
-	cout << "|  Original number of blocks:     "<<NBlocks<<"                                |"<<endl;
-	cout << "|  Number of variables:           "<<NVars<<"                                |"<<endl;
-	cout << "|  Number of clauses:             "<<NClas<<"                                |"<<endl;
-	cout << "|  Parse time:                    "<<ePT<<    " s                              |"<<endl;
-	cout << "|  Solver time:	                  "<<eST<<    " s                              |"<<endl;
-	cout << "|                                                                             |"<<endl;
-	cout << "=============================[ Eliminated files ]=============================="<<endl;
-	cout << "| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |"<<endl;
-	cout << "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |"<<endl;
-	cout << "==============================================================================="<<endl;
+	while (SolverRam.size()!=sz)  SolverRam.insert(0," ");
+	while (cnfSize.size()!=sz)  cnfSize.insert(0," ");
+
+	cout << "=========================[ Problem Statistics ]========================="<<endl;
+	cout <<endl;
+	cout << "								[ Reduction 1 selected ]"<<endl;
+	cout <<endl;
+	if (this->solverOUTPUT=="SATISFIESABLE")
+		cout << "									SATISFIESABLE"<<endl;
+	else
+		cout << "								***"<<this->solverOUTPUT<<"***"<<endl;
+	cout <<endl;
+	cout << "	Number of Files for Deletion:	"<<Dfiles<<endl;
+	cout << "	Number of Blocks for Deletion: "<<Dblocks<<endl;
+	cout << "	Original number of blocks:		"<<NBlocks<<endl;
+	cout << "	Number of variables:			"<<NVars<<endl;
+	cout << "	Number of clauses:				"<<NClas<<endl;
+	cout << "	Parse time:						"<<ePT<<  " s"<<endl;
+	cout << "	Solver time:						"<<eST<<" s"<<endl;
+	cout << "	Solver used RAM:				"<<SolverRam<<endl;
+	cout << "	Solver CNF input size:			"<<cnfSize<<" KB"<<endl;
+	cout <<endl;
+	if (this->solverOUTPUT=="SATISFIESABLE"){
+		cout << "==========================[ Eliminated files ]=========================="<<endl;
+		cout << "	Original # Files	|	Original Size	|	Deleted # Files	|	Deleted Size	|"<<endl;
+		cout << "	"<< origNumFiles <<"   	|	"<< origSize <<" GB	|	"<<  totalDelFiles <<"   	|	"<< DelSize <<" GB	|"<<endl;
+		cout << "===================================================================="<<endl;
+	}
+	else
+		cout << "===================================================================="<<endl;
 	string solOut = "Solution_Reduction1_heuristic_targetBlocks_"+this->HTarget.substr(1)+"_filesystems_"+to_string(this->firstFS)+"_to_"+to_string(this->lastFS)+"_output";
 	char *cstr = &solOut[0u];
 	File* solutionFile = new File (cstr);
@@ -674,6 +750,15 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	solutionFile->writeLine("|                          [ Reduction 1 selected ]                           |");
 	solutionFile->writeLine("|                                                                             |");
 	stringstream ss1;
+	if (this->solverOUTPUT=="SATISFIESABLE")
+		solutionFile->writeLine("|                                SATISFIESABLE                                |");
+	else{
+
+		ss1 << 				   "|                           ***"<<this->solverOUTPUT<<"***                             |";
+		solutionFile->writeLine(ss1.str());
+		ss1.str("");
+	}
+	solutionFile->writeLine("|                                                                             |");
 	ss1 << 				   "|  Number of Files for Deletion:  "<<Dfiles<< "                                |";
 	solutionFile->writeLine(ss1.str());
 	ss1.str("");
@@ -695,23 +780,55 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	ss1 << 				   "|  Solver time:	                  "<<eST<<    " s                              |";
 	solutionFile->writeLine(ss1.str());
 	ss1.str("");
-	solutionFile->writeLine("|                                                                             |");
-	solutionFile->writeLine("=============================[ Eliminated files ]==============================");
-	solutionFile->writeLine("| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |");
-	ss1 <<   "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |";
+	ss1 << 				   "|  Solver used RAM:                  "<<SolverRam<<    "                             |";
 	solutionFile->writeLine(ss1.str());
 	ss1.str("");
-	solutionFile->writeLine("===============================================================================");
-	solutionFile->writeLine("                                                                               ");
-	solutionFile->writeLine("============================[ Deleted files ID's ]=============================");
-	for (int i=0 ; i<this->deletedFiles.size() ; i++){
-		ss1 <<   this->deletedFiles[i];
+	ss1 << 				   "|  Solver CNF input size:         "<<cnfSize<<    " KB                             |";
+	solutionFile->writeLine(ss1.str());
+	ss1.str("");
+	solutionFile->writeLine("|                                                                             |");
+	if (this->solverOUTPUT=="SATISFIESABLE"){
+		solutionFile->writeLine("=============================[ Eliminated files ]==============================");
+		solutionFile->writeLine("| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |");
+		ss1 <<   "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |";
 		solutionFile->writeLine(ss1.str());
 		ss1.str("");
+		solutionFile->writeLine("===============================================================================");
+		solutionFile->writeLine("                                                                               ");
+		solutionFile->writeLine("============================[ Deleted files ID's ]=============================");
+		for (int i=0 ; i<this->deletedFiles.size() ; i++){
+			ss1 <<   this->deletedFiles[i];
+			solutionFile->writeLine(ss1.str());
+			ss1.str("");
+		}
 	}
+	else
+		solutionFile->writeLine("===============================================================================");
 	solutionFile->~File();
 }
 
+void Reduction1::writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver){
+	string ePT(elpParseTime);
+	string eST(elpSolverTime);
+	string maxRAMS(maxRAMSolver);
+	string cnfSize(CNFSize);
+	findOrigDelBlocks ();
+	string MarkedBlocksBySover = to_string(this->DelBlocksBySolver);
+	string FilesDelBySolver = to_string(this->deletedFiles.size());
+	string totalDelBlocks = to_string(this->DelBlocksBySolver+this->DelBlocksInAir);
+	string::size_type sZ;
+	int CNFS = stoi(cnfSize,&sZ);
+	CNFS=CNFS/1000;
+	cnfSize = to_string(CNFS);
+	ePT.resize(4);
+	eST.resize(4);
+	cout << "block,"+to_string(this->numOfFSystems)+","+to_string(this->firstFS)+","+to_string(this->lastFS)+","+this->HTarget+","
+			+to_string(this->inputfile->numOfFiles)+","+to_string(this->inputfile->numOfBlocks)+","+to_string(delFiles)+","
+			+to_string(delBlocks)+","+ePT+" s,"+cnfSize+" KB,"+eST+" s,"+maxRAMS+","+FilesDelBySolver+","+MarkedBlocksBySover+","
+			+totalDelBlocks+","<<endl;
+}
+
+//	exponential version - do not use
 //	/* writing the cnf files difference clause to the cnf solver input file*/
 //	for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){    		 // i=0 to m-k
 //		stringstream ss;
@@ -763,65 +880,66 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 //		}
 
 
-void Reduction1::print(){
-	cout << "DNF files:"<< endl;
-	for (uint i=0 ; i<this->DNFFile.size() ; i++){
-		for (uint j=0 ; j<this->DNFFile[i].size() ; j++){
-			if (this->DNFFile[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-	cout << "CNF files:"<< endl;
-	for (uint i=0 ; i<this->CNFFile.size() ; i++){
-		for (uint j=0 ; j<this->CNFFile[i].size() ; j++){
-			if (this->CNFFile[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-	cout << "DNF Blocks:"<< endl;
-	for (uint i=0 ; i<this->DNFBlocks.size() ; i++){
-		for (uint j=0 ; j<this->DNFBlocks[i].size() ; j++){
-			if (this->DNFBlocks[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-	cout << "CNF Blocks:"<< endl;
-	for (uint i=0 ; i<this->CNFBlocks.size() ; i++){
-		for (uint j=0 ; j<this->CNFBlocks[i].size() ; j++){
-			if (this->CNFBlocks[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-	cout << "CNF Edges:"<< endl;
-	for (uint i=0 ; i<this->DNFEdges.size() ; i++){
-		for (uint j=0 ; j<this->DNFEdges[i].size() ; j++){
-			if (this->DNFEdges[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-	cout << "CNF Diff:"<< endl;
-	for (uint i=0 ; i<this->CNFDiff.size() ; i++){
-		for (uint j=0 ; j<this->CNFDiff[i].size() ; j++){
-			if (this->CNFDiff[i][j]==true)
-				cout << 1;
-			else
-				cout << 0;
-		}
-		cout<<endl;
-	}
-}
+//		print method of all the DNF vectors for debugging
+//void Reduction1::print(){
+//	cout << "DNF files:"<< endl;
+//	for (uint i=0 ; i<this->DNFFile.size() ; i++){
+//		for (uint j=0 ; j<this->DNFFile[i].size() ; j++){
+//			if (this->DNFFile[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//	cout << "CNF files:"<< endl;
+//	for (uint i=0 ; i<this->CNFFile.size() ; i++){
+//		for (uint j=0 ; j<this->CNFFile[i].size() ; j++){
+//			if (this->CNFFile[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//	cout << "DNF Blocks:"<< endl;
+//	for (uint i=0 ; i<this->DNFBlocks.size() ; i++){
+//		for (uint j=0 ; j<this->DNFBlocks[i].size() ; j++){
+//			if (this->DNFBlocks[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//	cout << "CNF Blocks:"<< endl;
+//	for (uint i=0 ; i<this->CNFBlocks.size() ; i++){
+//		for (uint j=0 ; j<this->CNFBlocks[i].size() ; j++){
+//			if (this->CNFBlocks[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//	cout << "CNF Edges:"<< endl;
+//	for (uint i=0 ; i<this->DNFEdges.size() ; i++){
+//		for (uint j=0 ; j<this->DNFEdges[i].size() ; j++){
+//			if (this->DNFEdges[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//	cout << "CNF Diff:"<< endl;
+//	for (uint i=0 ; i<this->CNFDiff.size() ; i++){
+//		for (uint j=0 ; j<this->CNFDiff[i].size() ; j++){
+//			if (this->CNFDiff[i][j]==true)
+//				cout << 1;
+//			else
+//				cout << 0;
+//		}
+//		cout<<endl;
+//	}
+//}

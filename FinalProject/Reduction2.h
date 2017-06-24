@@ -14,7 +14,8 @@
 class Reduction2 {
 public:
 	Reduction2(char* path, int32_t delFiles, int32_t delBlocks);
-	Reduction2(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime,int numClas,int numVars);
+	Reduction2(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime
+			,int numClas,int numVars,char* CNFSize, char* maxRAMSolver);
 	virtual ~Reduction2();
 	void parser();
 	void liteParser();
@@ -23,7 +24,9 @@ public:
 	void writeCNF(int32_t delFiles, int32_t delBlocks);
 	std::string decodedOutput (int delFiles, int delBlocks);
 	void findBlocksInAir ();
-	void writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars);
+	void findOrigDelBlocks ();
+	void writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
+	void writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
 	std::vector< std::vector <int32_t> > MatCondCNF;
 	std::vector< std::vector< int32_t > > BAtLeastCNF;
 	std::vector< std::vector< int32_t > > FAtMostCNF;
@@ -35,6 +38,8 @@ public:
 	std::vector<int32_t> blocksInAir;
 	std::vector<int> blocksSize;
 	std::string HTarget;
+	std::string OrigBlocks;
+	std::string solverOUTPUT;
 	File* inputfile;
 	File* outputfile;
 	int32_t firstFile=0;
@@ -45,6 +50,8 @@ public:
 	int lastFS;
 	int32_t TotalblocksSize=0;
 	int32_t TotalDelBlockSize=0;
+	int32_t DelBlocksBySolver=0;
+	int32_t DelBlocksInAir=0;
 };
 
 #endif /* REDUCTION2_H_ */

@@ -19,7 +19,8 @@
 class Reduction1 {
 public:
 	Reduction1(char* path, int delFiles, int delBlocks);
-	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime,int numClas,int numVars);
+	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime
+			,int numClas,int numVars,char* CNFSize, char* maxRAMSolver);
 	virtual ~Reduction1();
 	void parser();
 	void convert2cnf();
@@ -32,9 +33,11 @@ public:
 	void liteParser();
 	int fromBin(long n);
 	std::string decodedOutput (int delFiles, int delBlocks);
-	void writeOutputSTDout (char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars);
+	void findOrigDelBlocks ();
+	void writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
 	std::vector<bool> id2dnf (int id);
 	void findBlocksInAir ();
+	void writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
 	std::vector< std::vector <bool> > DNFEdges;		//store one dnf edges clause
@@ -52,6 +55,7 @@ public:
 	std::string numOfVar;
 	std::string numOfClause;
 	std::string HTarget;
+	std::string solverOUTPUT;
 	long TotalblocksSize=0;							//save the total blocks size (bytes) in the output parsing
 	long TotalDelBlockSize=0;
 	int numOfLiterals=0;
@@ -62,6 +66,8 @@ public:
 	int numOfFSystems=0;
 	int firstFS =0;
 	int lastFS =0;
+	int32_t DelBlocksBySolver=0;
+	int32_t DelBlocksInAir=0;
 	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;
