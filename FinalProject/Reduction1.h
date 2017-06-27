@@ -30,7 +30,7 @@ public:
 	void encodeDNFDiff ();
 	int summtion(int delFiles, int delBlocks);
 	void writeCNF(int delFiles, int delBlocks);
-	void liteParser();
+	void liteParser(int op);
 	int fromBin(long n);
 	std::string decodedOutput (int delFiles, int delBlocks);
 	void findOrigDelBlocks ();
@@ -38,6 +38,7 @@ public:
 	std::vector<bool> id2dnf (int id);
 	void findBlocksInAir ();
 	void writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
+	void validetionTset();
 	std::vector< std::vector <bool> > DNFFile;      //store one dnf files clause
 	std::vector< std::vector <bool> > DNFBlocks;	//store one dnf blocks clause
 	std::vector< std::vector <bool> > DNFEdges;		//store one dnf edges clause
@@ -52,6 +53,7 @@ public:
 	std::vector <int> blocksInAir;		  //contain all the blocks id that deleted and not mark by the solver
 	std::vector <int> blocksSize;
 	std::vector < std::vector <int> > BTF;   //blocks to files edges, the index of the outer vector is the block ID
+	std::vector < std::vector <int> > FTB;   //files to blocks edges, the first object of every inner vector is the File id
 	std::string numOfVar;
 	std::string numOfClause;
 	std::string HTarget;

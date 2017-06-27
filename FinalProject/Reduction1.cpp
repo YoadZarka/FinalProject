@@ -24,8 +24,11 @@ Reduction1::Reduction1(char* path, int delFiles, int delBlocks) {
 	if (this->numOfLiterals>63){
 		cout << "Too many litterals, can't calculate";
 		exit(1);}
-	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
-		cout << "The k or k' input is bigger then the original input";
+	if (this->inputfile->numOfFiles<delFiles){
+		cout << "The k files input is bigger then the original files";
+		exit(1);}
+	if (this->inputfile->numOfBlocks<delBlocks){
+		cout << "The k' blocks input is bigger then the original blocks";
 		exit(1);}
 	parser();
 	this->inputfile->~File();
@@ -47,16 +50,23 @@ Reduction1::Reduction1(char* inputPath, char* outputPath, int delFiles, int delB
 	if (this->numOfLiterals>63){
 		cout << "Too many litterals, can't calculate";
 		exit(1);}
-	if ((this->inputfile->numOfBlocks<delBlocks)||(this->inputfile->numOfFiles<delFiles)){
-		cout << "The k or k' input is bigger then the original input";
+	if (this->inputfile->numOfFiles<delFiles){
+		cout << "The k files input is bigger then the original files";
 		exit(1);}
-	liteParser();
+	if (this->inputfile->numOfBlocks<delBlocks){
+		cout << "The k' blocks input is bigger then the original blocks";
+		exit(1);}
+	liteParser(op);
 	this->outputfile = new File (outputPath,2);
 	this->solverOUTPUT=decodedOutput(delFiles,delBlocks);
 	if (op==1)
 		writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars, CNFSize, maxRAMSolver);
 	if (op==2)
 		writeOutputSaraiGala(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars, CNFSize, maxRAMSolver);
+	if (op==3){
+		writeOutputSTDout(elpParseTime, elpSolverTime,delFiles,delBlocks,numClas,numVars, CNFSize, maxRAMSolver);
+		validetionTset();
+	}
 	this->inputfile->~File();
 	this->outputfile->~File();
 	cout << "all done!";
@@ -451,7 +461,7 @@ void Reduction1::writeCNF(int delFiles, int delBlocks){
 	this->outputfile->~File();
 }
 
-void Reduction1::liteParser(){
+void Reduction1::liteParser(int op){
 	for (int h=0; h<this->inputfile->numOfBlocks ; h++)
 		this->blocksSize.push_back(0);
 	string line;
@@ -478,11 +488,16 @@ void Reduction1::liteParser(){
 			pos=line.find(",")+1;
 			temp_str=line.substr(pos);
 			line=temp_str.substr(0);
+			vector <int> temp;
+			temp.push_back(f);
 			for (int i=0 ; i<bn ;i++){
 				pos=line.find(",");
 				num=line.substr(0,pos);
 				int b;
 				stringstream(num) >> b;  //get the block id number to b
+				if (op==3){
+					temp.push_back(b);
+				}
 				line=line.substr(pos+1);
 				pos=line.find(",");
 				num=line.substr(0,pos);
@@ -492,6 +507,10 @@ void Reduction1::liteParser(){
 				if (this->blocksSize[b]==0)
 					this->blocksSize[b]=size;  //save the block size at b cell in the vector
 			}
+			if (op==3){
+				this->FTB.push_back(temp);
+			}
+			temp.clear();
 			line=this->inputfile->getLine();
 		}
 		else{
@@ -516,8 +535,8 @@ void Reduction1::liteParser(){
 				this->HTarget = line.substr(pos);
 			}
 
-			if (line.at(0) == 'B'){
-				for (int i=0; i<4 ; i++){
+			if ((line.at(0) == 'B')&&(op==2)){
+				for (int i=0; i<3 ; i++){
 					line=line.substr(line.find(",")+1);
 				}
 				size_t pos=line.find(",");
@@ -579,7 +598,7 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 	string line;
 	line=this->outputfile->getLine();
 	if (line=="UNSAT")
-		return "UNSATISFIESABLE";
+		return "UNSATISFIABLE";
 	if (line=="SAT"){
 		line=this->outputfile->getLine();
 		for (int i=0 ; i<(this->inputfile->numOfFiles-delFiles) ; i++){
@@ -632,7 +651,7 @@ string Reduction1::decodedOutput (int delFiles, int delBlocks){
 				this->deletedFiles.push_back(this->files[i]);
 			}
 		}
-		return "SATISFIESABLE";
+		return "SATISFIABLE";
 	}
 	if (line == "***end***")
 		return " INDETERMINATE ";
@@ -680,8 +699,8 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	string strSize = "            ";
 	string ePT(elpParseTime);
 	string eST(elpSolverTime);
-	ePT.resize(4);
-	eST.resize(4);
+	ePT.resize(6);
+	eST.resize(6);
 	string Dfiles =to_string(delFiles);
 	string Dblocks =to_string(delBlocks);
 	string NClas = to_string(numClas);
@@ -719,8 +738,8 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	cout <<endl;
 	cout << "								[ Reduction 1 selected ]"<<endl;
 	cout <<endl;
-	if (this->solverOUTPUT=="SATISFIESABLE")
-		cout << "									SATISFIESABLE"<<endl;
+	if (this->solverOUTPUT=="SATISFIABLE")
+		cout << "								 	SATISFIABLE"<<endl;
 	else
 		cout << "								***"<<this->solverOUTPUT<<"***"<<endl;
 	cout <<endl;
@@ -734,7 +753,7 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	cout << "	Solver used RAM:				"<<SolverRam<<endl;
 	cout << "	Solver CNF input size:			"<<cnfSize<<" KB"<<endl;
 	cout <<endl;
-	if (this->solverOUTPUT=="SATISFIESABLE"){
+	if (this->solverOUTPUT=="SATISFIABLE"){
 		cout << "==========================[ Eliminated files ]=========================="<<endl;
 		cout << "	Original # Files	|	Original Size	|	Deleted # Files	|	Deleted Size	|"<<endl;
 		cout << "	"<< origNumFiles <<"   	|	"<< origSize <<" GB	|	"<<  totalDelFiles <<"   	|	"<< DelSize <<" GB	|"<<endl;
@@ -742,7 +761,7 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	}
 	else
 		cout << "===================================================================="<<endl;
-	string solOut = "Solution_Reduction1_heuristic_targetBlocks_"+this->HTarget.substr(1)+"_filesystems_"+to_string(this->firstFS)+"_to_"+to_string(this->lastFS)+"_output";
+	string solOut = "Solution_Reduction1_K_"+to_string(delFiles)+"_K'_"+to_string(delBlocks)+"targetBlocks_"+this->HTarget.substr(1)+"_filesystems_"+to_string(this->firstFS)+"_to_"+to_string(this->lastFS)+".txt";
 	char *cstr = &solOut[0u];
 	File* solutionFile = new File (cstr);
 	solutionFile->writeLine("============================[ Problem Statistics ]=============================");
@@ -750,11 +769,11 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	solutionFile->writeLine("|                          [ Reduction 1 selected ]                           |");
 	solutionFile->writeLine("|                                                                             |");
 	stringstream ss1;
-	if (this->solverOUTPUT=="SATISFIESABLE")
-		solutionFile->writeLine("|                                SATISFIESABLE                                |");
+	if (this->solverOUTPUT=="SATISFIABLE")
+		solutionFile->writeLine("|                                 SATISFIABLE                                 |");
 	else{
 
-		ss1 << 				   "|                           ***"<<this->solverOUTPUT<<"***                             |";
+		ss1 << 				   "|                            ***"<<this->solverOUTPUT<<"***                              |";
 		solutionFile->writeLine(ss1.str());
 		ss1.str("");
 	}
@@ -787,7 +806,7 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	solutionFile->writeLine(ss1.str());
 	ss1.str("");
 	solutionFile->writeLine("|                                                                             |");
-	if (this->solverOUTPUT=="SATISFIESABLE"){
+	if (this->solverOUTPUT=="SATISFIABLE"){
 		solutionFile->writeLine("=============================[ Eliminated files ]==============================");
 		solutionFile->writeLine("| Original # Files |  Original Size   |   Deleted # Files   |   Deleted Size  |");
 		ss1 <<   "|   "<< origNumFiles <<"   |  "<< origSize <<" GB |    "<<  totalDelFiles <<"     | "<< DelSize <<" GB |";
@@ -805,6 +824,7 @@ void Reduction1::writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int d
 	else
 		solutionFile->writeLine("===============================================================================");
 	solutionFile->~File();
+	cout << solOut;
 }
 
 void Reduction1::writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver){
@@ -817,15 +837,32 @@ void Reduction1::writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,in
 	string FilesDelBySolver = to_string(this->deletedFiles.size());
 	string totalDelBlocks = to_string(this->DelBlocksBySolver+this->DelBlocksInAir);
 	string::size_type sZ;
-	int CNFS = stoi(cnfSize,&sZ);
-	CNFS=CNFS/1000;
-	cnfSize = to_string(CNFS);
-	ePT.resize(4);
-	eST.resize(4);
-	cout << "block,"+to_string(this->numOfFSystems)+","+to_string(this->firstFS)+","+to_string(this->lastFS)+","+this->HTarget+","
-			+to_string(this->inputfile->numOfFiles)+","+to_string(this->inputfile->numOfBlocks)+","+to_string(delFiles)+","
-			+to_string(delBlocks)+","+ePT+" s,"+cnfSize+" KB,"+eST+" s,"+maxRAMS+","+FilesDelBySolver+","+MarkedBlocksBySover+","
-			+totalDelBlocks+","<<endl;
+	ePT.resize(6);
+	eST.resize(6);
+	if (this->solverOUTPUT=="SATISFIABLE"){
+		cout << "block,"+to_string(this->numOfFSystems)+","+to_string(this->firstFS)+","+to_string(this->lastFS)+","+this->HTarget+","
+				+to_string(this->inputfile->numOfFiles)+","+to_string(this->inputfile->numOfBlocks)+","+to_string(delFiles)+","
+				+to_string(delBlocks)+","+ePT+","+cnfSize+","+eST+","+maxRAMS+","+FilesDelBySolver+","+MarkedBlocksBySover+","
+				+totalDelBlocks+","<<endl;
+	}
+	else{
+		cout << "block,"+to_string(this->numOfFSystems)+","+to_string(this->firstFS)+","+to_string(this->lastFS)+","+this->HTarget+","
+				+to_string(this->inputfile->numOfFiles)+","+to_string(this->inputfile->numOfBlocks)+","+to_string(delFiles)+","
+				+to_string(delBlocks)+","+ePT+","+cnfSize+","+eST+","+maxRAMS+","+"0,0,0,"<<endl;
+	}
+}
+
+void Reduction1::validetionTset(){
+	for(int i=0; i<this->FTB.size(); i++){
+		if (!(find(this->deletedFiles.begin(), this->deletedFiles.end(),this->FTB[i][0]) != this->deletedFiles.end()))  //if the file id is not in the deleted files
+			for(int j=1; j<this->FTB[i].size(); j++){
+				if (find(this->deletedBlocks.begin(), this->deletedBlocks.end(),this->FTB[i][j]) != this->deletedBlocks.end()){
+					cout << "Validation Test failed! - The deleted Block "<<this->FTB[i][j]<<" connected to remaining File "<<this->FTB[i][0];
+					exit(1);
+				}
+			}
+	}
+	cout << "Validation Test succeeded!";
 }
 
 //	exponential version - do not use

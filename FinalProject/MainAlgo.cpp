@@ -48,9 +48,6 @@ int main(int argc, char *argv[]){
 	int red = stoi(str2,&sz);
 	str2 = argv[5];						// arg 5 is the op code:
 	int op = stoi(str2,&sz);			// op=0 for parse input, op=1 for decode output for our GUI, op=2 for decode output for sarai
-	if (delfile>delblock){
-		cout << "The k files can't be smaller then k' blocks";
-		exit(1);}
 	if (op==0)  //parse input file only
 	{
 		if (red==1)
@@ -63,7 +60,7 @@ int main(int argc, char *argv[]){
 		return 1;
 	}
 	else
-		if (op==1 || op==2)  //decode output file
+		if (op==1 || op==2 || op==3)  //decode output file
 		{
 			if (argc < 9){
 				cout<<"Wrong number of arguments passed"<<endl;

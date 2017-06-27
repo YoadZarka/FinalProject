@@ -18,7 +18,7 @@ public:
 			,int numClas,int numVars,char* CNFSize, char* maxRAMSolver);
 	virtual ~Reduction2();
 	void parser();
-	void liteParser();
+	void liteParser(int op);
 	std::vector< std::vector< int32_t > > pb2cnf (std::vector< int32_t > literals, int k, int32_t firstAuxVar, std::string op);
 	void writeVec (std::vector< std::vector< int32_t > > vec);
 	void writeCNF(int32_t delFiles, int32_t delBlocks);
@@ -27,10 +27,12 @@ public:
 	void findOrigDelBlocks ();
 	void writeOutputSTDout(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
 	void writeOutputSaraiGala(char* elpParseTime, char* elpSolverTime,int delFiles, int delBlocks,int numClas,int numVars, char* CNFSize, char* maxRAMSolver);
+	void validetionTset();
 	std::vector< std::vector <int32_t> > MatCondCNF;
 	std::vector< std::vector< int32_t > > BAtLeastCNF;
 	std::vector< std::vector< int32_t > > FAtMostCNF;
 	std::vector < std::vector <int32_t> > BTF;   //blocks to files edges, the index of the outer vector is the block ID
+	std::vector < std::vector <int> > FTB;   //files to blocks edges, the first object of every inner vector is the File id
 	std::vector<int32_t> files;
 	std::vector<int32_t> remainFiles;
 	std::vector<int32_t> deletedBlocks;
