@@ -10,15 +10,14 @@
 #include "File.h"
 #include <vector>
 
-/* The files and blocks are represent by there SN in the input file, first the blocks
+/* The files and blocks are represented by there SN in the input file, first the blocks
  * starts from 0 (as in the input file) and the files are continuous after it. the real
  * file SN stored in "vector<int> files" so we can retrieve from the solver result.
- * Dont forget that the Solver result describe the files we want to keep
- * and blocks we want to delete.
+ * Dont forget that the Solver result describe the files we want to keep and blocks we want to delete.
  */
 class Reduction1 {
 public:
-	Reduction1(char* path, int delFiles, int delBlocks);
+	Reduction1(char* path, int delFiles, int delBlocks,char *CnfName);
 	Reduction1(char* inputPath, char* outputPath, int delFiles, int delBlocks, int op,char* elpParseTime, char* elpSolverTime
 			,int numClas,int numVars,char* CNFSize, char* maxRAMSolver);
 	virtual ~Reduction1();
@@ -28,8 +27,8 @@ public:
 	void dnf2cnf (std::vector< std::vector <bool> >& dnf);
 	//void encodeCNFDiff ();
 	void encodeDNFDiff ();
-	int summtion(int delFiles, int delBlocks);
-	void writeCNF(int delFiles, int delBlocks);
+	int summation(int delFiles, int delBlocks);
+	void writeCNF(int delFiles, int delBlocks,char *CnfName);
 	void liteParser(int op);
 	int fromBin(long n);
 	std::string decodedOutput (int delFiles, int delBlocks);
@@ -47,13 +46,14 @@ public:
 	std::vector< std::vector <bool> > DNFDiff;		//store one dnf difference check clause
 	std::vector< std::vector <bool> > CNFDiff;		//store one cnf difference check clause
 	std::vector< std::vector <bool> > tempCnf;		//using in the cnf convert function
-	std::vector <int> deletedBlocks;  	  //contain all the blocks id for deletion
-	std::vector <int> remainFiles;		  //contain all the files id for remaining
-	std::vector <int> deletedFiles;		  //contain all the files id for deletion
-	std::vector <int> blocksInAir;		  //contain all the blocks id that deleted and not mark by the solver
-	std::vector <int> blocksSize;
-	std::vector < std::vector <int> > BTF;   //blocks to files edges, the index of the outer vector is the block ID
-	std::vector < std::vector <int> > FTB;   //files to blocks edges, the first object of every inner vector is the File id
+	std::vector<int> files;							//contain all the original files id's, the index represents the new file id used for encode and decode
+	std::vector <int> deletedBlocks;  	 			//contain all the original blocks id for deletion
+	std::vector <int> remainFiles;		  			//contain all the original files id for remaining
+	std::vector <int> deletedFiles;		  			//contain all the original files id for deletion
+	std::vector <int> blocksInAir;		  			//contain all the original blocks id that deleted and not mark by the solver
+	std::vector <int> blocksSize;					//contain all the original blocks sizes, the index represent the block id
+	std::vector < std::vector <int> > BTF;   		//blocks to files edges, the index of the outer vector is the block ID
+	std::vector < std::vector <int> > FTB;   		//files to blocks edges, the first object of every inner vector is the File id
 	std::string numOfVar;
 	std::string numOfClause;
 	std::string HTarget;
@@ -70,7 +70,6 @@ public:
 	int lastFS =0;
 	int32_t DelBlocksBySolver=0;
 	int32_t DelBlocksInAir=0;
-	std::vector<int> files;
 	File* inputfile;
 	File* outputfile;
 };

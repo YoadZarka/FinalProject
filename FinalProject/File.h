@@ -23,8 +23,8 @@ public:
 	virtual ~File();
 	std::string getLine ();
 	void writeLine (std::string line);
-	File& operator=(const File &A) {return *this;}
-	File& operator=(File &A) {return *this;}
+	File& operator=(const File &A) {return *this;}  //define operator =
+	File& operator=(File &A) {return *this;}		//define operator =
 private:
 	void readNumFilesBlocks ();
 };
